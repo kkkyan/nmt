@@ -379,7 +379,7 @@ class BaseModel(object):
 
     ## Decoder.
     with tf.variable_scope("decoder") as decoder_scope:
-      cell, decoder_initial_state = self._build_decoder_cell(
+      fw_cell, bw_cell, fw_decoder_initial_state, bw_decoder_initial_state= self._build_decoder_cell(
           hparams, encoder_outputs, encoder_state,
           iterator.source_sequence_length)
 
@@ -398,19 +398,31 @@ class BaseModel(object):
             time_major=self.time_major)
 
         # Decoder
-        my_decoder = tf.contrib.seq2seq.BasicDecoder(
-            cell,
+        fw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
+            fw_cell,
             helper,
-            decoder_initial_state,)
+            fw_decoder_initial_state,)
+
+        bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
+            bw_cell,
+            helper,
+            bw_decoder_initial_state,)
 
         # Dynamic decoding
-        outputs, final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
-            my_decoder,
+        fw_outputs, fw_final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
+            fw_my_decoder,
             output_time_major=self.time_major,
             swap_memory=True,
             scope=decoder_scope)
 
-        sample_id = outputs.sample_id
+        bw_outputs, bw_final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
+            bw_my_decoder,
+            output_time_major=self.time_major,
+            swap_memory=True,
+            scope=decoder_scope)
+
+        fw_sample_id = fw_outputs.sample_id
+        bw_sample_id = bw_outputs.sample_id
 
         # Note: there's a subtle difference here between train and inference.
         # We could have set output_layer when create my_decoder
@@ -418,7 +430,10 @@ class BaseModel(object):
         # We chose to apply the output_layer to all timesteps for speed:
         #   10% improvements for small models & 20% for larger ones.
         # If memory is a concern, we should apply output_layer per timestep.
-        logits = self.output_layer(outputs.rnn_output)
+        fw_logits = self.output_layer(fw_outputs.rnn_output)
+        bw_logits = self.output_layer(bw_outputs.rnn_output)
+
+        return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
       ## Inference
       else:
@@ -429,11 +444,11 @@ class BaseModel(object):
 
         if beam_width > 0:
           my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-              cell=cell,
+              cell=fw_cell,
               embedding=self.embedding_decoder,
               start_tokens=start_tokens,
               end_token=end_token,
-              initial_state=decoder_initial_state,
+              initial_state=fw_decoder_initial_state,
               beam_width=beam_width,
               output_layer=self.output_layer,
               length_penalty_weight=length_penalty_weight)
@@ -451,9 +466,9 @@ class BaseModel(object):
 
           # Decoder
           my_decoder = tf.contrib.seq2seq.BasicDecoder(
-              cell,
+              fw_cell,
               helper,
-              decoder_initial_state,
+              fw_decoder_initial_state,
               output_layer=self.output_layer  # applied per timestep
           )
 
@@ -472,7 +487,7 @@ class BaseModel(object):
           logits = outputs.rnn_output
           sample_id = outputs.sample_id
 
-    return logits, sample_id, final_context_state
+    return fw_logits, bw_logits, sample_id, final_context_state
 
   def get_max_time(self, tensor):
     time_axis = 0 if self.time_major else 1

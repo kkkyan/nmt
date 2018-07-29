@@ -262,6 +262,10 @@ def add_arguments(parser):
       beam width when using beam search decoder. If 0 (default), use standard
       decoder with greedy helper.\
       """))
+  parser.add_argument("--use_bibeam", type="bool", nargs="?",
+                      const=True, default=False, help=("""\
+                      use bidirectional beam.\
+                      """))
   parser.add_argument("--length_penalty_weight", type=float, default=0.0,
                       help="Length penalty for beam search.")
   parser.add_argument("--sampling_temperature", type=float,
@@ -342,6 +346,7 @@ def create_hparams(flags):
       tgt_max_len_infer=flags.tgt_max_len_infer,
       infer_batch_size=flags.infer_batch_size,
       beam_width=flags.beam_width,
+      use_bibeam=flags.use_bibeam,
       length_penalty_weight=flags.length_penalty_weight,
       sampling_temperature=flags.sampling_temperature,
       num_translations_per_input=flags.num_translations_per_input,

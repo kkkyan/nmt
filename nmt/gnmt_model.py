@@ -153,7 +153,21 @@ class GNMTModel(attention_model.AttentionModel):
     attention_mechanism = self.attention_mechanism_fn(
         attention_option, num_units, memory, source_sequence_length, self.mode)
 
-    cell_list = model_helper._cell_list(  # pylint: disable=protected-access
+    # forward cell
+    fw_cell_list = model_helper._cell_list(  # pylint: disable=protected-access
+        unit_type=hparams.unit_type,
+        num_units=num_units,
+        num_layers=self.num_decoder_layers,
+        num_residual_layers=self.num_decoder_residual_layers,
+        forget_bias=hparams.forget_bias,
+        dropout=hparams.dropout,
+        num_gpus=self.num_gpus,
+        mode=self.mode,
+        single_cell_fn=self.single_cell_fn,
+        residual_fn=gnmt_residual_fn
+    )
+    # backward cell
+    bw_cell_list = model_helper._cell_list(  # pylint: disable=protected-access
         unit_type=hparams.unit_type,
         num_units=num_units,
         num_layers=self.num_decoder_layers,
@@ -167,39 +181,57 @@ class GNMTModel(attention_model.AttentionModel):
     )
 
     # Only wrap the bottom layer with the attention mechanism.
-    attention_cell = cell_list.pop(0)
+    fw_attention_cell, bw_attention_cell= fw_cell_list.pop(0), bw_cell_list.pop(0)
 
     # Only generate alignment in greedy INFER mode.
     alignment_history = (self.mode == tf.contrib.learn.ModeKeys.INFER and
                          beam_width == 0)
-    attention_cell = tf.contrib.seq2seq.AttentionWrapper(
-        attention_cell,
+
+    fw_attention_cell = tf.contrib.seq2seq.AttentionWrapper(
+        fw_attention_cell,
         attention_mechanism,
         attention_layer_size=None,  # don't use attention layer.
         output_attention=False,
         alignment_history=alignment_history,
-        name="attention")
+        name="fw_attention")
+    bw_attention_cell = tf.contrib.seq2seq.AttentionWrapper(
+        bw_attention_cell,
+        attention_mechanism,
+        attention_layer_size=None,  # don't use attention layer.
+        output_attention=False,
+        alignment_history=alignment_history,
+        name="bw_attention")
 
     if attention_architecture == "gnmt":
-      cell = GNMTAttentionMultiCell(
-          attention_cell, cell_list)
+      fw_cell = GNMTAttentionMultiCell(
+          fw_attention_cell, fw_cell_list)
+      bw_cell = GNMTAttentionMultiCell(
+          bw_attention_cell, bw_cell_list)
     elif attention_architecture == "gnmt_v2":
-      cell = GNMTAttentionMultiCell(
-          attention_cell, cell_list, use_new_attention=True)
+      fw_cell = GNMTAttentionMultiCell(
+          fw_attention_cell, fw_cell_list, use_new_attention=True)
+      bw_cell = GNMTAttentionMultiCell(
+          bw_attention_cell, bw_cell_list, use_new_attention=True)
     else:
       raise ValueError(
           "Unknown attention_architecture %s" % attention_architecture)
 
     if hparams.pass_hidden_state:
-      decoder_initial_state = tuple(
+      fw_decoder_initial_state = tuple(
           zs.clone(cell_state=es)
           if isinstance(zs, tf.contrib.seq2seq.AttentionWrapperState) else es
           for zs, es in zip(
-              cell.zero_state(batch_size, dtype), encoder_state))
+              fw_cell.zero_state(batch_size, dtype), encoder_state))
+      bw_decoder_initial_state = tuple(
+          zs.clone(cell_state=es)
+          if isinstance(zs, tf.contrib.seq2seq.AttentionWrapperState) else es
+          for zs, es in zip(
+              bw_cell.zero_state(batch_size, dtype), encoder_state))
     else:
-      decoder_initial_state = cell.zero_state(batch_size, dtype)
+      fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype)
+      bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype)
 
-    return cell, decoder_initial_state
+    return fw_cell, bw_cell, fw_decoder_initial_state, bw_decoder_initial_state
 
   def _get_infer_summary(self, hparams):
     # Standard attention
