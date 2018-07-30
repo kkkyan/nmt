@@ -109,16 +109,16 @@ class BaseModel(object):
     res = self.build_graph(hparams, scope=scope)
 
     if self.mode == tf.contrib.learn.ModeKeys.TRAIN:
-      self.train_loss = res[1]
+      self.train_loss = res[0]
       self.word_count = tf.reduce_sum(
           self.iterator.source_sequence_length) + tf.reduce_sum(
               self.iterator.target_sequence_length)
     elif self.mode == tf.contrib.learn.ModeKeys.EVAL:
-      self.eval_loss = res[1]
+      self.eval_loss = res[0]
     elif self.mode == tf.contrib.learn.ModeKeys.INFER:
-      self.infer_logits, _, self.final_context_state, self.sample_id = res
+      _, self.infer_fw_logits, self.infer_bw_logits, self.fw_sample_id, self.bw_sample_id, self.fw_final_context_state,  self.bw_final_context_state= res
       self.sample_words = reverse_target_vocab_table.lookup(
-          tf.to_int64(self.sample_id))
+          tf.to_int64(self.fw_sample_id))
 
     if self.mode != tf.contrib.learn.ModeKeys.INFER:
       ## Count the number of predicted words for compute ppl.
@@ -299,18 +299,18 @@ class BaseModel(object):
       encoder_outputs, encoder_state = self._build_encoder(hparams)
 
       ## Decoder
-      logits, sample_id, final_context_state = self._build_decoder(
+      fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state = self._build_decoder(
           encoder_outputs, encoder_state, hparams)
 
       ## Loss
       if self.mode != tf.contrib.learn.ModeKeys.INFER:
         with tf.device(model_helper.get_device_str(self.num_encoder_layers - 1,
                                                    self.num_gpus)):
-          loss = self._compute_loss(logits)
+          loss = self._compute_loss(fw_logits, bw_logits)
       else:
         loss = None
 
-      return logits, loss, final_context_state, sample_id
+      return loss, fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
   @abc.abstractmethod
   def _build_encoder(self, hparams):
@@ -393,19 +393,28 @@ class BaseModel(object):
             self.embedding_decoder, target_input)
 
         # Helper
-        helper = tf.contrib.seq2seq.TrainingHelper(
+        fw_helper = tf.contrib.seq2seq.TrainingHelper(
             decoder_emb_inp, iterator.target_sequence_length,
+            time_major=self.time_major)
+        
+        # bw_helper need to reverse input
+        batch_axis = 1 if self.time_major else 0
+        seq_axis = 1 - batch_axis
+        reverse_decoder_emb_inp = tf.reverse_sequence(decoder_emb_inp, iterator.target_sequence_length,
+                                                                                        seq_axis=seq_axis, batch_axis=batch_axis)
+        bw_helper = tf.contrib.seq2seq.TrainingHelper(
+            reverse_decoder_emb_inp, iterator.target_sequence_length,
             time_major=self.time_major)
 
         # Decoder
         fw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
             fw_cell,
-            helper,
+            fw_helper,
             fw_decoder_initial_state,)
 
         bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
             bw_cell,
-            helper,
+            bw_helper,
             bw_decoder_initial_state,)
 
         # Dynamic decoding
@@ -415,13 +424,19 @@ class BaseModel(object):
             swap_memory=True,
             scope=decoder_scope)
 
-        bw_outputs, bw_final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
+        bw_outputs, bw_final_context_state, final_sequence_length = tf.contrib.seq2seq.dynamic_decode(
             bw_my_decoder,
             output_time_major=self.time_major,
             swap_memory=True,
             scope=decoder_scope)
 
-        fw_sample_id = fw_outputs.sample_id
+        # reverse bw_ouputs
+        bw_outputs = tf.reverse_sequence(bw_outputs, final_sequence_length,
+                                                                 batch_axis=batch_axis, seq_axis=seq_axis)
+
+        # sample_id is the argmax of the rnn output
+        # here we didn't pass the dense layer, so the sample_id makes no sense
+        fw_sample_id = fw_outputs.sample_id 
         bw_sample_id = bw_outputs.sample_id
 
         # Note: there's a subtle difference here between train and inference.
@@ -432,8 +447,6 @@ class BaseModel(object):
         # If memory is a concern, we should apply output_layer per timestep.
         fw_logits = self.output_layer(fw_outputs.rnn_output)
         bw_logits = self.output_layer(bw_outputs.rnn_output)
-
-        return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
       ## Inference
       else:
@@ -473,7 +486,7 @@ class BaseModel(object):
           )
 
         # Dynamic decoding
-        outputs, final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
+        outputs, fw_final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
             my_decoder,
             maximum_iterations=maximum_iterations,
             output_time_major=self.time_major,
@@ -481,13 +494,16 @@ class BaseModel(object):
             scope=decoder_scope)
 
         if beam_width > 0:
-          logits = tf.no_op()
-          sample_id = outputs.predicted_ids
+          fw_logits = tf.no_op()
+          fw_sample_id = outputs.predicted_ids
+          bw_logits = None
+          bw_sample_id = None
+          bw_final_context_state = None
         else:
-          logits = outputs.rnn_output
-          sample_id = outputs.sample_id
+          fw_logits = outputs.rnn_output
+          fw_sample_id = outputs.sample_id
 
-    return fw_logits, bw_logits, sample_id, final_context_state
+      return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
   def get_max_time(self, tensor):
     time_axis = 0 if self.time_major else 1
@@ -510,22 +526,27 @@ class BaseModel(object):
     """
     pass
 
-  def _compute_loss(self, logits):
+  def _compute_loss(self, fw_logits, bw_logits):
     """Compute optimization loss."""
     target_output = self.iterator.target_output
     if self.time_major:
       target_output = tf.transpose(target_output)
     max_time = self.get_max_time(target_output)
-    crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        labels=target_output, logits=logits)
+    fw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        labels=target_output, logits=fw_logits)
+    bw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        labels=target_output, logits=bw_logits)
     target_weights = tf.sequence_mask(
         self.iterator.target_sequence_length, max_time, dtype=logits.dtype)
     if self.time_major:
       target_weights = tf.transpose(target_weights)
 
-    loss = tf.reduce_sum(
-        crossent * target_weights) / tf.to_float(self.batch_size)
-    return loss
+    fw_loss = tf.reduce_sum(
+        fw_crossent * target_weights) / tf.to_float(self.batch_size)
+    bw_loss = tf.reduce_sum(
+        bw_crossent * target_weights) / tf.to_float(self.batch_size)
+
+    return fw_loss + bw_loss
 
   def _get_infer_summary(self, hparams):
     return tf.no_op()
