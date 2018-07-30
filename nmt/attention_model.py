@@ -100,7 +100,18 @@ class AttentionModel(model.Model):
     attention_mechanism = self.attention_mechanism_fn(
         attention_option, num_units, memory, source_sequence_length, self.mode)
 
-    cell = model_helper.create_rnn_cell(
+    fw_cell = model_helper.create_rnn_cell(
+        unit_type=hparams.unit_type,
+        num_units=num_units,
+        num_layers=num_layers,
+        num_residual_layers=num_residual_layers,
+        forget_bias=hparams.forget_bias,
+        dropout=hparams.dropout,
+        num_gpus=self.num_gpus,
+        mode=self.mode,
+        single_cell_fn=self.single_cell_fn)
+
+    bw_cell = model_helper.create_rnn_cell(
         unit_type=hparams.unit_type,
         num_units=num_units,
         num_layers=num_layers,
@@ -114,26 +125,41 @@ class AttentionModel(model.Model):
     # Only generate alignment in greedy INFER mode.
     alignment_history = (self.mode == tf.contrib.learn.ModeKeys.INFER and
                          beam_width == 0)
-    cell = tf.contrib.seq2seq.AttentionWrapper(
-        cell,
+
+    fw_cell = tf.contrib.seq2seq.AttentionWrapper(
+        fw_cell,
         attention_mechanism,
         attention_layer_size=num_units,
         alignment_history=alignment_history,
         output_attention=hparams.output_attention,
-        name="attention")
+        name="fw_attention")
+
+    bw_cell = tf.contrib.seq2seq.AttentionWrapper(
+        bw_cell,
+        attention_mechanism,
+        attention_layer_size=num_units,
+        alignment_history=alignment_history,
+        output_attention=hparams.output_attention,
+        name="bw_attention")
 
     # TODO(thangluong): do we need num_layers, num_gpus?
-    cell = tf.contrib.rnn.DeviceWrapper(cell,
+    fw_cell = tf.contrib.rnn.DeviceWrapper(fw_cell,
+                                        model_helper.get_device_str(
+                                            num_layers - 1, self.num_gpus))
+    bw_cell = tf.contrib.rnn.DeviceWrapper(bw_cell,
                                         model_helper.get_device_str(
                                             num_layers - 1, self.num_gpus))
 
     if hparams.pass_hidden_state:
-      decoder_initial_state = cell.zero_state(batch_size, dtype).clone(
+      fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype).clone(
+          cell_state=encoder_state)
+      bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype).clone(
           cell_state=encoder_state)
     else:
-      decoder_initial_state = cell.zero_state(batch_size, dtype)
+      fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype)
+      bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype)
 
-    return cell, decoder_initial_state
+    return fw_cell, bw_cell, fw_decoder_initial_state, bw_decoder_initial_state
 
   def _get_infer_summary(self, hparams):
     if hparams.beam_width > 0:

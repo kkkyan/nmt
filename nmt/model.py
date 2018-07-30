@@ -392,34 +392,19 @@ class BaseModel(object):
         decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, target_input)
 
-        # Helper
-        fw_helper = tf.contrib.seq2seq.TrainingHelper(
-            decoder_emb_inp, iterator.target_sequence_length,
-            time_major=self.time_major)
-
-        # Decoder
-        fw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
-              fw_cell,
-              fw_helper,
-              fw_decoder_initial_state,)
-
-        # bw_helper need to reverse input
-        batch_dim = 1 if self.time_major else 0
-        seq_dim = 1 - batch_dim
-        reverse_decoder_emb_inp = tf.reverse_sequence(decoder_emb_inp, iterator.target_sequence_length,
-                                                          seq_dim=seq_dim, batch_dim=batch_dim)
-        # helper
-        bw_helper = tf.contrib.seq2seq.TrainingHelper(
-            reverse_decoder_emb_inp, iterator.target_sequence_length,
-            time_major=self.time_major)
-        # Decoder
-        bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
-            bw_cell,
-            bw_helper,
-            bw_decoder_initial_state,)
-
         # fw_decoder
         with tf.variable_scope("fw_decoder") as fw_decoder_scope:
+          # Helper
+          fw_helper = tf.contrib.seq2seq.TrainingHelper(
+              decoder_emb_inp, iterator.target_sequence_length,
+              time_major=self.time_major)
+
+          # Decoder
+          fw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
+                fw_cell,
+                fw_helper,
+                fw_decoder_initial_state,)
+          # decode
           fw_outputs, fw_final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
               fw_my_decoder,
               output_time_major=self.time_major,
@@ -433,11 +418,27 @@ class BaseModel(object):
 
         # bw_decoder
         with tf.variable_scope("bw_decoder") as bw_decoder_scope:
+          # bw_helper need to reverse input
+          batch_dim = 1 if self.time_major else 0
+          seq_dim = 1 - batch_dim
+          reverse_decoder_emb_inp = tf.reverse_sequence(decoder_emb_inp, iterator.target_sequence_length,
+                                                            seq_dim=seq_dim, batch_dim=batch_dim)
+          # helper
+          bw_helper = tf.contrib.seq2seq.TrainingHelper(
+              reverse_decoder_emb_inp, iterator.target_sequence_length,
+              time_major=self.time_major)
+          # Decoder
+          bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
+              bw_cell,
+              bw_helper,
+              bw_decoder_initial_state,)
+          # decode
           bw_outputs, bw_final_context_state, final_sequence_length = tf.contrib.seq2seq.dynamic_decode(
               bw_my_decoder,
               output_time_major=self.time_major,
               swap_memory=True,
               scope=bw_decoder_scope)
+
         # reverse bw_ouputs
         bw_output = tf.reverse_sequence(bw_outputs.rnn_output, final_sequence_length,
                                             seq_dim=seq_dim, batch_dim=batch_dim)
@@ -494,7 +495,7 @@ class BaseModel(object):
             maximum_iterations=maximum_iterations,
             output_time_major=self.time_major,
             swap_memory=True,
-	    scope="fw_decoder")
+	          scope=scope)
 
         if beam_width > 0:
           fw_logits = tf.no_op()
