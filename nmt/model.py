@@ -101,7 +101,7 @@ class BaseModel(object):
 
     # Projection
     with tf.variable_scope(scope or "build_network"):
-      with tf.variable_scope("decoder/output_projection"):
+      with tf.variable_scope("output_projection"):
         self.output_layer = layers_core.Dense(
             hparams.tgt_vocab_size, use_bias=False, name="output_projection")
 
