@@ -431,7 +431,7 @@ class BaseModel(object):
             scope=bw_decoder_scope)
 
         # reverse bw_ouputs
-        bw_outputs.rnn_output = tf.reverse_sequence(bw_outputs.rnn_output, final_sequence_length,
+        bw_output = tf.reverse_sequence(bw_outputs.rnn_output, final_sequence_length,
                                                                  batch_axis=batch_axis, seq_axis=seq_axis)
 
         # sample_id is the argmax of the rnn output
@@ -446,7 +446,7 @@ class BaseModel(object):
         #   10% improvements for small models & 20% for larger ones.
         # If memory is a concern, we should apply output_layer per timestep.
         fw_logits = self.output_layer(fw_outputs.rnn_output)
-        bw_logits = self.output_layer(bw_outputs.rnn_output)
+        bw_logits = self.output_layer(bw_output)
 
       ## Inference
       else:
@@ -491,7 +491,7 @@ class BaseModel(object):
             maximum_iterations=maximum_iterations,
             output_time_major=self.time_major,
             swap_memory=True,
-            scope=decoder_scope)
+            scope=fw_decoder_scope)
 
         if beam_width > 0:
           fw_logits = tf.no_op()
