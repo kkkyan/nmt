@@ -537,7 +537,7 @@ class BaseModel(object):
     bw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=target_output, logits=bw_logits)
     target_weights = tf.sequence_mask(
-        self.iterator.target_sequence_length, max_time, dtype=logits.dtype)
+        self.iterator.target_sequence_length, max_time, dtype=fw_logits.dtype)
     if self.time_major:
       target_weights = tf.transpose(target_weights)
 
