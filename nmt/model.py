@@ -378,7 +378,7 @@ class BaseModel(object):
         hparams, iterator.source_sequence_length)
 
     ## Decoder.
-    with tf.variable_scope("decoder") as decoder_scope:
+    with tf.variable_scope("fw_decoder") as fw_decoder_scope, tf.variable_scope("bw_decoder") as bw_decoder_scope:
       fw_cell, bw_cell, fw_decoder_initial_state, bw_decoder_initial_state= self._build_decoder_cell(
           hparams, encoder_outputs, encoder_state,
           iterator.source_sequence_length)
@@ -422,13 +422,13 @@ class BaseModel(object):
             fw_my_decoder,
             output_time_major=self.time_major,
             swap_memory=True,
-            scope=decoder_scope)
+            scope=fw_decoder_scope)
 
         bw_outputs, bw_final_context_state, final_sequence_length = tf.contrib.seq2seq.dynamic_decode(
             bw_my_decoder,
             output_time_major=self.time_major,
             swap_memory=True,
-            scope=decoder_scope)
+            scope=bw_decoder_scope)
 
         # reverse bw_ouputs
         bw_outputs = tf.reverse_sequence(bw_outputs, final_sequence_length,
