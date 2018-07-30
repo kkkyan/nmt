@@ -431,7 +431,7 @@ class BaseModel(object):
             scope=bw_decoder_scope)
 
         # reverse bw_ouputs
-        bw_outputs = tf.reverse_sequence(bw_outputs, final_sequence_length,
+        bw_outputs.rnn_output = tf.reverse_sequence(bw_outputs.rnn_output, final_sequence_length,
                                                                  batch_axis=batch_axis, seq_axis=seq_axis)
 
         # sample_id is the argmax of the rnn output
