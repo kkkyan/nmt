@@ -554,7 +554,7 @@ class BaseModel(object):
   def infer(self, sess):
     assert self.mode == tf.contrib.learn.ModeKeys.INFER
     return sess.run([
-        self.infer_logits, self.infer_summary, self.sample_id, self.sample_words
+        self.infer_fw_logits, self.infer_summary, self.fw_sample_id, self.sample_words
     ])
 
   def decode(self, sess):

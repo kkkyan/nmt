@@ -242,7 +242,7 @@ class GNMTModel(attention_model.AttentionModel):
     if hparams.beam_width > 0:
       return tf.no_op()
     return attention_model._create_attention_images_summary(
-        self.final_context_state[0])
+        self.fw_final_context_state[0])
 
 
 class GNMTAttentionMultiCell(tf.nn.rnn_cell.MultiRNNCell):

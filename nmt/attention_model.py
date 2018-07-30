@@ -138,7 +138,7 @@ class AttentionModel(model.Model):
   def _get_infer_summary(self, hparams):
     if hparams.beam_width > 0:
       return tf.no_op()
-    return _create_attention_images_summary(self.final_context_state)
+    return _create_attention_images_summary(self.fw_final_context_state)
 
 
 def create_attention_mechanism(attention_option, num_units, memory,
