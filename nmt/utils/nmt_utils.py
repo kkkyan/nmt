@@ -93,16 +93,18 @@ def decode_and_evaluate(name,
 
 def get_translation(nmt_outputs, sent_id, tgt_eos, subword_option):
   """Given batch decoding outputs, select a sentence and turn to text."""
-  if tgt_eos: tgt_eos = tgt_eos.encode("utf-8")
+  if tgt_eos: tgt_eos = [eos.encode("utf-8") for eos in tgt_eos]
   # for 2 direction
   translations = []
   # Select a sentence
-  for nmt_output in nmt_outputs:
+  for nmt_output, eos in zip(nmt_outputs, tgt_eos):
     output = nmt_output[sent_id, :].tolist()
 
     # If there is an eos symbol in outputs, cut them at that point.
-    if tgt_eos and tgt_eos in output:
-      output = output[:output.index(tgt_eos)]
+    if eos and eos in output:
+      output = output[:output.index(eos)]
+      if eos == "</s>": # backward reverse list
+        output.reverse()
 
     if subword_option == "bpe":  # BPE
       translation = utils.format_bpe_text(output)

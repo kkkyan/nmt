@@ -101,8 +101,7 @@ class BaseModel(object):
     self.batch_size = tf.size(self.iterator.source_sequence_length)
 
     # Projection
-    with tf.variable_scope("projection", reuse=True):
-      self.output_layer = layers_core.Dense(
+    self.output_layer = layers_core.Dense(
             hparams.tgt_vocab_size, use_bias=False, name="output_projection")
 
     ## Train graph
@@ -269,7 +268,7 @@ class BaseModel(object):
 
   def eval(self, sess):
     assert self.mode == tf.contrib.learn.ModeKeys.EVAL
-    return sess.run([self.eval_loss,
+    return sess.run([self.fw_loss, self.bw_loss,
                      self.predict_count,
                      self.batch_size])
 
@@ -550,12 +549,12 @@ class BaseModel(object):
     if self.time_major:
       target_weights = tf.transpose(target_weights)
 
-    fw_loss = tf.reduce_sum(
+    self.fw_loss = tf.reduce_sum(
         fw_crossent * target_weights) / tf.to_float(self.batch_size)
-    bw_loss = tf.reduce_sum(
+    self.bw_loss = tf.reduce_sum(
         bw_crossent * target_weights) / tf.to_float(self.batch_size)
 
-    return fw_loss + bw_loss
+    return self.fw_loss + self.bw_loss
 
   def _get_infer_summary(self, hparams):
     return tf.no_op()

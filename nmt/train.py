@@ -494,7 +494,10 @@ def _internal_eval(model, global_step, sess, iterator, iterator_feed_dict,
                    summary_writer, label):
   """Computing perplexity."""
   sess.run(iterator.initializer, feed_dict=iterator_feed_dict)
-  ppl = model_helper.compute_perplexity(model, sess, label)
+  fw_ppl, bw_ppl, ppl = model_helper.compute_perplexity(model, sess, label)
+  # add summary for all ppl
+  utils.add_summary(summary_writer, global_step, "%s_fw_ppl" % label, fw_ppl)
+  utils.add_summary(summary_writer, global_step, "%s_bw_ppl" % label, bw_ppl)
   utils.add_summary(summary_writer, global_step, "%s_ppl" % label, ppl)
   return ppl
 
@@ -522,12 +525,12 @@ def _sample_decode(model, global_step, sess, hparams, iterator, src_data,
   translations = nmt_utils.get_translation(
       (fw_nmt_outputs, bw_nmt_outputs),
       sent_id=0,
-      tgt_eos=hparams.eos,
+      tgt_eos=(hparams.eos, hparams.sos),
       subword_option=hparams.subword_option)
   utils.print_out("    src: %s" % src_data[decode_id])
   utils.print_out("    ref: %s" % tgt_data[decode_id])
-  utils.print_out(b"   fw nmt: " + translations[0])
-  utils.print_out(b"   bw nmt: " + translations[1])
+  utils.print_out(b"      fw nmt: " + translations[0])
+  utils.print_out(b"      bw nmt: " + translations[1])
 
   # Summary
   if attention_summary is not None:
@@ -559,7 +562,7 @@ def _external_eval(model, global_step, sess, hparams, iterator,
       metrics=hparams.metrics,
       subword_option=hparams.subword_option,
       beam_width=hparams.beam_width,
-      tgt_eos=hparams.eos,
+      tgt_eos=(hparams.eos, hparams.sos),
       decode=decode)
   # Save on best metrics
   if decode:
