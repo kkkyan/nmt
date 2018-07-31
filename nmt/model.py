@@ -118,8 +118,10 @@ class BaseModel(object):
       self.eval_loss = res[0]
     elif self.mode == tf.contrib.learn.ModeKeys.INFER:
       _, self.infer_fw_logits, self.infer_bw_logits, self.fw_sample_id, self.bw_sample_id, self.fw_final_context_state,  self.bw_final_context_state= res
-      self.sample_words = reverse_target_vocab_table.lookup(
+      self.fw_sample_words = reverse_target_vocab_table.lookup(
           tf.to_int64(self.fw_sample_id))
+      self.bw_sample_words = reverse_target_vocab_table.lookup(
+          tf.to_int64(self.bw_sample_id))
 
     if self.mode != tf.contrib.learn.ModeKeys.INFER:
       ## Count the number of predicted words for compute ppl.
@@ -421,7 +423,7 @@ class BaseModel(object):
             bw_decoder_initial_state,)
 
         # decode
-        (fw_output, bw_output),(fw_sample_id, bw_sample_id),(fw_final_context_state, bw_final_context_state) = custom_helper.dynamic_bidecode(
+        (fw_output, bw_output),(fw_final_context_state, bw_final_context_state), (fw_origins, bw_origins) = custom_helper.dynamic_bidecode(
           fw_my_decoder, bw_my_decoder,
           output_time_major=self.time_major,
           swap_memory=True,
@@ -437,7 +439,9 @@ class BaseModel(object):
         #   10% improvements for small models & 20% for larger ones.
         # If memory is a concern, we should apply output_layer per timestep.
         fw_logits = self.output_layer(fw_output)
+        fw_sample_id = fw_origins.sample_id
         bw_logits = self.output_layer(bw_output)
+        bw_sample_id = bw_origins.sample_id
 
       ## Inference
       else:
@@ -447,7 +451,7 @@ class BaseModel(object):
         end_token = tgt_eos_id
 
         if beam_width > 0:
-          my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
+          fw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
               cell=fw_cell,
               embedding=self.embedding_decoder,
               start_tokens=start_tokens,
@@ -456,6 +460,17 @@ class BaseModel(object):
               beam_width=beam_width,
               output_layer=self.output_layer,
               length_penalty_weight=length_penalty_weight)
+
+          bw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
+              cell=bw_cell,
+              embedding=self.embedding_decoder,
+              start_tokens=start_tokens,
+              end_token=end_token,
+              initial_state=bw_decoder_initial_state,
+              beam_width=beam_width,
+              output_layer=self.output_layer,
+              length_penalty_weight=length_penalty_weight)
+
         else:
           # Helper
           sampling_temperature = hparams.sampling_temperature
@@ -476,8 +491,8 @@ class BaseModel(object):
           )
 
         # Dynamic decoding
-        outputs, fw_final_context_state, _ = tf.contrib.seq2seq.dynamic_decode(
-            my_decoder,
+        (fw_output, bw_output),(fw_final_context_state, bw_final_context_state), (fw_origins, bw_origins) = custom_helper.dynamic_bidecode(
+            fw_my_decoder, bw_my_decoder,
             maximum_iterations=maximum_iterations,
             output_time_major=self.time_major,
             swap_memory=True,
@@ -485,13 +500,12 @@ class BaseModel(object):
 
         if beam_width > 0:
           fw_logits = tf.no_op()
-          fw_sample_id = outputs.predicted_ids
-          bw_logits = None
-          bw_sample_id = None
-          bw_final_context_state = None
+          bw_logits = tf.no_op()
+          fw_sample_id = fw_origins.predicted_ids
+          bw_sample_id = bw_origins.predicted_ids
         else:
-          fw_logits = outputs.rnn_output
-          fw_sample_id = outputs.sample_id
+          fw_logits = fw_origins.rnn_output
+          fw_sample_id = fw_origins.sample_id
 
     return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
@@ -544,7 +558,10 @@ class BaseModel(object):
   def infer(self, sess):
     assert self.mode == tf.contrib.learn.ModeKeys.INFER
     return sess.run([
-        self.infer_fw_logits, self.infer_summary, self.fw_sample_id, self.sample_words
+      self.infer_summary, 
+      (self.infer_fw_logits, self.infer_bw_logits),
+      (self.fw_sample_id, self.bw_sample_id),
+      (self.fw_sample_words, self.bw_sample_words)
     ])
 
   def decode(self, sess):
@@ -557,16 +574,18 @@ class BaseModel(object):
       A tuple consiting of outputs, infer_summary.
         outputs: of size [batch_size, time]
     """
-    _, infer_summary, _, sample_words = self.infer(sess)
+    infer_summary, _, _, (fw_sample_words, bw_sample_words) = self.infer(sess)
 
     # make sure outputs is of shape [batch_size, time] or [beam_width,
     # batch_size, time] when using beam search.
     if self.time_major:
-      sample_words = sample_words.transpose()
-    elif sample_words.ndim == 3:  # beam search output in [batch_size,
+      fw_sample_words = fw_sample_words.transpose()
+      bw_sample_words = bw_sample_words.transpose()
+    elif fw_sample_words.ndim == 3:  # beam search output in [batch_size,
                                   # time, beam_width] shape.
-      sample_words = sample_words.transpose([2, 0, 1])
-    return sample_words, infer_summary
+      fw_sample_words = fw_sample_words.transpose([2, 0, 1])
+      bw_sample_words = bw_sample_words.transpose([2, 0, 1])
+    return (fw_sample_words, bw_sample_words), infer_summary
 
 
 class Model(BaseModel):

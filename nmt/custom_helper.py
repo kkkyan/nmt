@@ -67,6 +67,6 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
 
   outputs = (fw_final_outputs.rnn_output, output_bw)
   output_states = (fw_final_state, bw_final_state)
-  simple_ids = (fw_final_outputs.sample_id, bw_final_outputs.sample_id)
+  origins = (fw_final_outputs, bw_final_outputs)
 
-  return (outputs, simple_ids, output_states)
+  return (outputs, output_states, origins )
