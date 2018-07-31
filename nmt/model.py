@@ -101,7 +101,8 @@ class BaseModel(object):
     self.batch_size = tf.size(self.iterator.source_sequence_length)
 
     # Projection
-    self.output_layer = layers_core.Dense(
+    with tf.variable_scope("projection", reuse=True):
+      self.output_layer = layers_core.Dense(
             hparams.tgt_vocab_size, use_bias=False, name="output_projection")
 
     ## Train graph
