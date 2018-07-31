@@ -103,8 +103,10 @@ def get_translation(nmt_outputs, sent_id, tgt_eos, subword_option):
     # If there is an eos symbol in outputs, cut them at that point.
     if eos and eos in output:
       output = output[:output.index(eos)]
-      if eos == "</s>": # backward reverse list
-        output.reverse()
+
+    # backward reverse list
+    if eos == tgt_eos[1]: 
+      output.reverse()
 
     if subword_option == "bpe":  # BPE
       translation = utils.format_bpe_text(output)
