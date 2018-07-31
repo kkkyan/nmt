@@ -14,14 +14,13 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
                    swap_memory=False,
                    scope=None):
   """Perform dynamic decoding with `bidecoder`."""
-
   if not isinstance(fw_decoder, Decoder):
     raise TypeError("Expected fw_decoder to be type Decoder, but saw: %s" %
-                    type(fw_decoder))
+                 type(fw_decoder))
 
   if not isinstance(bw_decoder, Decoder):
     raise TypeError("Expected bw_decoder to be type Decoder, but saw: %s" %
-                    type(bw_decoder))
+                 type(bw_decoder))
 
   with tf.variable_scope(scope,"bi_decoder") as scope:
     # Forward
@@ -60,13 +59,19 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
         swap_memory=swap_memory,
         scope=bw_scope
       )
-
-  output_bw = _reverse(
+  
+  if not isinstance(fw_decoder, tf.contrib.seq2seq.BeamSearchDecoder):
+    # no beam search
+    fw_rnn_output = fw_final_outputs.rnn_output
+    bw_rnn_output = _reverse(
       bw_final_outputs.rnn_output, seq_lengths=bw_final_sequence_lengths,
       seq_dim=time_dim, batch_dim=batch_dim)
+  else:
+    fw_rnn_output = tf.no_op()
+    bw_rnn_output = tf.no_op()
 
-  outputs = (fw_final_outputs.rnn_output, output_bw)
+  rnn_outputs = (fw_rnn_output, bw_rnn_output)
   output_states = (fw_final_state, bw_final_state)
-  origins = (fw_final_outputs, bw_final_outputs)
+  decoder_outputs = (fw_final_outputs, bw_final_outputs)
 
-  return (outputs, output_states, origins )
+  return (rnn_outputs, output_states, decoder_outputs)
