@@ -53,21 +53,23 @@ def decode_and_evaluate(name,
           min(num_translations_per_input, beam_width), 1)
       while True:
         try:
-          nmt_outputs, _ = model.decode(sess)
+          (fw_nmt_outputs, bw_nmt_outputs), _ = model.decode(sess)
           if beam_width == 0:
-            nmt_outputs = np.expand_dims(nmt_outputs, 0)
+            fw_nmt_outputs = np.expand_dims(fw_nmt_outputs, 0)
+            bw_nmt_outputs = np.expand_dims(bw_nmt_outputs, 0)
 
-          batch_size = nmt_outputs.shape[1]
+          batch_size = fw_nmt_outputs.shape[1]
           num_sentences += batch_size
 
           for sent_id in range(batch_size):
             for beam_id in range(num_translations_per_input):
-              translation = get_translation(
-                  nmt_outputs[beam_id],
+              translations = get_translation(
+                  (fw_nmt_outputs[beam_id], bw_nmt_outputs[beam_id]),
                   sent_id,
                   tgt_eos=tgt_eos,
                   subword_option=subword_option)
-              trans_f.write((translation + b"\n").decode("utf-8"))
+              trans_f.write((translations[0] + b"\n").decode("utf-8"))
+              trans_f.write((translations[1] + b"\n").decode("utf-8"))
         except tf.errors.OutOfRangeError:
           utils.print_time(
               "  done, num sentences %d, num translations per input %d" %
