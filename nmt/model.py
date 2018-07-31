@@ -101,8 +101,8 @@ class BaseModel(object):
     self.batch_size = tf.size(self.iterator.source_sequence_length)
 
     # Projection
-    self.output_layer = layers_core.Dense(hparams.tgt_vocab_size, 
-                    use_bias=False, name="output_projection", reuse=True)
+    self.output_layer = layers_core.Dense(
+            hparams.tgt_vocab_size, use_bias=False, name="output_projection")
 
     ## Train graph
     res = self.build_graph(hparams, scope=scope)
@@ -379,7 +379,7 @@ class BaseModel(object):
         hparams, iterator.source_sequence_length)
 
     ## Decoder.
-    with tf.variable_scope("bidecoder") as decoder_scope:
+    with tf.variable_scope("decoder") as decoder_scope:
       fw_cell, bw_cell, fw_decoder_initial_state, bw_decoder_initial_state= self._build_decoder_cell(
           hparams, encoder_outputs, encoder_state,
           iterator.source_sequence_length)
@@ -400,9 +400,9 @@ class BaseModel(object):
               time_major=self.time_major)
         # Decoder
         fw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
-                fw_cell,
-                fw_helper,
-                fw_decoder_initial_state,)
+            fw_cell,
+            fw_helper,
+            fw_decoder_initial_state,output_layer=self.output_layer)
 
         # bw_decoder
         # bw_helper need to reverse input
@@ -418,17 +418,16 @@ class BaseModel(object):
         bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
             bw_cell,
             bw_helper,
-            bw_decoder_initial_state,)
+            bw_decoder_initial_state, output_layer=self.output_layer)
 
         # decode
-        (fw_output, bw_output),(fw_final_context_state, bw_final_context_state), (fw_origins, bw_origins) = custom_helper.dynamic_bidecode(
+        (fw_rnn_output, bw_rnn_output), \
+        (fw_final_context_state, bw_final_context_state), \
+        (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode(
           fw_my_decoder, bw_my_decoder,
           output_time_major=self.time_major,
           swap_memory=True,
           scope=decoder_scope)
-
-        # sample_id is the argmax of the rnn output
-        # here we didn't pass the dense layer, so the sample_id makes no sense
 
         # Note: there's a subtle difference here between train and inference.
         # We could have set output_layer when create my_decoder
@@ -436,10 +435,11 @@ class BaseModel(object):
         # We chose to apply the output_layer to all timesteps for speed:
         #   10% improvements for small models & 20% for larger ones.
         # If memory is a concern, we should apply output_layer per timestep.
-        fw_logits = self.output_layer(fw_output)
-        fw_sample_id = fw_origins.sample_id
-        bw_logits = self.output_layer(bw_output)
-        bw_sample_id = bw_origins.sample_id
+        # sample_id is the argmax of the rnn output
+        fw_logits = fw_rnn_output
+        fw_sample_id = fw_decoder_output.sample_id
+        bw_logits = bw_rnn_output
+        bw_sample_id = bw_decoder_output.sample_id
 
       ## Inference
       else:
@@ -489,7 +489,9 @@ class BaseModel(object):
           )
 
         # Dynamic decoding
-        (fw_output, bw_output),(fw_final_context_state, bw_final_context_state), (fw_origins, bw_origins) = custom_helper.dynamic_bidecode(
+        (fw_rnn_output, bw_rnn_output), \
+        (fw_final_context_state, bw_final_context_state), \
+        (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode(
             fw_my_decoder, bw_my_decoder,
             maximum_iterations=maximum_iterations,
             output_time_major=self.time_major,
@@ -499,11 +501,13 @@ class BaseModel(object):
         if beam_width > 0:
           fw_logits = tf.no_op()
           bw_logits = tf.no_op()
-          fw_sample_id = fw_origins.predicted_ids
-          bw_sample_id = bw_origins.predicted_ids
+          fw_sample_id = fw_decoder_output.predicted_ids
+          bw_sample_id = bw_decoder_output.predicted_ids
         else:
-          fw_logits = fw_origins.rnn_output
-          fw_sample_id = fw_origins.sample_id
+          fw_logits = fw_rnn_output
+          bw_logits = bw_rnn_output
+          fw_sample_id = fw_decoder_output.sample_id
+          bw_sample_id = bw_decoder_output.sample_id
 
     return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
