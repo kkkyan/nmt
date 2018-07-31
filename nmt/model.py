@@ -448,6 +448,8 @@ class BaseModel(object):
         length_penalty_weight = hparams.length_penalty_weight
         start_tokens = tf.fill([self.batch_size], tgt_sos_id)
         end_token = tgt_eos_id
+        bw_start_tokens = tf.fill([self.batch_size], tgt_eos_id)
+        bw_end_token = tgt_sos_id
 
         if beam_width > 0:
           fw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
@@ -463,8 +465,8 @@ class BaseModel(object):
           bw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
               cell=bw_cell,
               embedding=self.embedding_decoder,
-              start_tokens=start_tokens,
-              end_token=end_token,
+              start_tokens=bw_start_tokens,
+              end_token=bw_end_token,
               initial_state=bw_decoder_initial_state,
               beam_width=beam_width,
               output_layer=self.output_layer,
