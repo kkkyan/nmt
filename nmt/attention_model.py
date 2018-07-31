@@ -97,8 +97,10 @@ class AttentionModel(model.Model):
     else:
       batch_size = self.batch_size
 
-    attention_mechanism = self.attention_mechanism_fn(
-        attention_option, num_units, memory, source_sequence_length, self.mode)
+    fw_attention_mechanism = self.attention_mechanism_fn(
+        attention_option, num_units, memory, source_sequence_length, self.mode, name="fw_LuongAttention")
+    bw_attention_mechanism = self.attention_mechanism_fn(
+        attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention")
 
     fw_cell = model_helper.create_rnn_cell(
         unit_type=hparams.unit_type,
@@ -128,7 +130,7 @@ class AttentionModel(model.Model):
 
     fw_cell = tf.contrib.seq2seq.AttentionWrapper(
         fw_cell,
-        attention_mechanism,
+        fw_attention_mechanism,
         attention_layer_size=num_units,
         alignment_history=alignment_history,
         output_attention=hparams.output_attention,
@@ -136,7 +138,7 @@ class AttentionModel(model.Model):
 
     bw_cell = tf.contrib.seq2seq.AttentionWrapper(
         bw_cell,
-        attention_mechanism,
+        bw_attention_mechanism,
         attention_layer_size=num_units,
         alignment_history=alignment_history,
         output_attention=hparams.output_attention,
@@ -168,28 +170,29 @@ class AttentionModel(model.Model):
 
 
 def create_attention_mechanism(attention_option, num_units, memory,
-                               source_sequence_length, mode):
+                               source_sequence_length, mode, name="LuongAttention"):
   """Create attention mechanism based on the attention_option."""
   del mode  # unused
 
   # Mechanism
   if attention_option == "luong":
     attention_mechanism = tf.contrib.seq2seq.LuongAttention(
-        num_units, memory, memory_sequence_length=source_sequence_length)
+        num_units, memory, memory_sequence_length=source_sequence_length, name=name)
   elif attention_option == "scaled_luong":
     attention_mechanism = tf.contrib.seq2seq.LuongAttention(
         num_units,
         memory,
         memory_sequence_length=source_sequence_length,
-        scale=True)
+        scale=True,
+        name=name)
   elif attention_option == "bahdanau":
     attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
-        num_units, memory, memory_sequence_length=source_sequence_length)
+        num_units, memory, memory_sequence_length=source_sequence_length, name=name)
   elif attention_option == "normed_bahdanau":
     attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
         num_units,
         memory,
-        memory_sequence_length=source_sequence_length,
+        memory_sequence_length=source_sequence_length, name=name,
         normalize=True)
   else:
     raise ValueError("Unknown attention option %s" % attention_option)
