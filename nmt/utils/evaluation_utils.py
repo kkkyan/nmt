@@ -84,16 +84,24 @@ def _bleu(ref_file, trans_file, subword_option=None):
       reference_list.append(reference.split(" "))
     per_segment_references.append(reference_list)
 
-  translations = []
-  with codecs.getreader("utf-8")(tf.gfile.GFile(trans_file, "rb")) as fh:
-    for line in fh:
-      line = _clean(line, subword_option=None)
-      translations.append(line.split(" "))
+  translations = {
+    'fw': [],
+    'bw': []
+  }
+
+  fw_trans_file, bw_trans_file = trans_file
+  with codecs.getreader("utf-8")(tf.gfile.GFile(fw_trans_file, "rb")) as fw_fh,\
+        codecs.getreader("utf-8")(tf.gfile.GFile(bw_trans_file, "rb")) as bw_fh:
+    for fw_line, bw_line in zip(fw_fh, bw_fh):
+      fw_line = _clean(fw_line, subword_option=None)
+      bw_line = _clean(bw_line, subword_option=None)
+      translations['fw'].append(fw_line.split(" "))
+      translations['bw'].append(bw_line.split(" "))
 
   # bleu_score, precisions, bp, ratio, translation_length, reference_length
-  bleu_score, _, _, _, _, _ = bleu.compute_bleu(
+  bleu_score = bleu.compute_bleu(
       per_segment_references, translations, max_order, smooth)
-  return 100 * bleu_score
+  return (100 * bleu_score['fw'], 100 * bleu_score['bw'])
 
 
 def _rouge(ref_file, summarization_file, subword_option=None):

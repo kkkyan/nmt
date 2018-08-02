@@ -39,15 +39,21 @@ def decode_and_evaluate(name,
                         num_translations_per_input=1,
                         decode=True):
   """Decode a test set and compute a score according to the evaluation task."""
+  fw_trans_file, bw_trans_file = trans_file
+
   # Decode
   if decode:
-    utils.print_out("  decoding to output %s." % trans_file)
+    utils.print_out("  decoding to output %s." % fw_trans_file)
+    utils.print_out("  decoding to output %s." % bw_trans_file)
 
     start_time = time.time()
     num_sentences = 0
     with codecs.getwriter("utf-8")(
-        tf.gfile.GFile(trans_file, mode="wb")) as trans_f:
-      trans_f.write("")  # Write empty string to ensure file is created.
+        tf.gfile.GFile(fw_trans_file, mode="wb")) as fw_trans_f,\
+        codecs.getwriter("utf-8")(
+          tf.gfile.GFile(bw_trans_file, mode="wb")) as bw_trans_f:
+      fw_trans_f.write("")  # Write empty string to ensure file is created.
+      bw_trans_f.write("")  # Write empty string to ensure file is created.
 
       num_translations_per_input = max(
           min(num_translations_per_input, beam_width), 1)
@@ -63,13 +69,13 @@ def decode_and_evaluate(name,
 
           for sent_id in range(batch_size):
             for beam_id in range(num_translations_per_input):
-              translations = get_translation(
+              (fw_translation, bw_translation) = get_translation(
                   (fw_nmt_outputs[beam_id], bw_nmt_outputs[beam_id]),
                   sent_id,
                   tgt_eos=tgt_eos,
                   subword_option=subword_option)
-              trans_f.write((translations[0] + b"\n").decode("utf-8"))
-              trans_f.write((translations[1] + b"\n").decode("utf-8"))
+              fw_trans_f.write((fw_translation + b"\n").decode("utf-8"))
+              bw_trans_f.write((bw_translation + b"\n").decode("utf-8"))
         except tf.errors.OutOfRangeError:
           utils.print_time(
               "  done, num sentences %d, num translations per input %d" %
@@ -78,7 +84,7 @@ def decode_and_evaluate(name,
 
   # Evaluation
   evaluation_scores = {}
-  if ref_file and tf.gfile.Exists(trans_file):
+  if ref_file and (tf.gfile.Exists(fw_trans_file) and tf.gfile.Exists(bw_trans_file)):
     for metric in metrics:
       score = evaluation_utils.evaluate(
           ref_file,
@@ -86,35 +92,39 @@ def decode_and_evaluate(name,
           metric,
           subword_option=subword_option)
       evaluation_scores[metric] = score
-      utils.print_out("  %s %s: %.1f" % (metric, name, score))
+      
+      utils.print_out("fw_%s %s: %.1f" % (metric, name, score[0]))
+      utils.print_out("bw_%s %s: %.1f" % (metric, name, score[1]))
 
   return evaluation_scores
 
 
 def get_translation(nmt_outputs, sent_id, tgt_eos, subword_option):
   """Given batch decoding outputs, select a sentence and turn to text."""
-  if tgt_eos: tgt_eos = [eos.encode("utf-8") for eos in tgt_eos]
+  if tgt_eos: tgt_eos = tgt_eos.encode("utf-8")
   # for 2 direction
-  translations = []
+  fw_nmt_output, bw_nmt_output = nmt_outputs
   # Select a sentence
-  for nmt_output, eos in zip(nmt_outputs, tgt_eos):
-    output = nmt_output[sent_id, :].tolist()
+  fw_output = fw_nmt_output[sent_id, :].tolist()
+  bw_output = bw_nmt_output[sent_id, :].tolist()
 
-    # If there is an eos symbol in outputs, cut them at that point.
-    if eos and eos in output:
-      output = output[:output.index(eos)]
+  # If there is an eos symbol in outputs, cut them at that point.
+  if tgt_eos and tgt_eos in fw_output:
+    fw_output = fw_output[:fw_output.index(tgt_eos)]
+  if tgt_eos and tgt_eos in bw_output:
+    bw_output = bw_output[:bw_output.index(tgt_eos)]
 
-    # backward reverse list
-    if eos == tgt_eos[1]: 
-      output.reverse()
+  # backward reverse list
+  bw_output.reverse()
 
-    if subword_option == "bpe":  # BPE
-      translation = utils.format_bpe_text(output)
-    elif subword_option == "spm":  # SPM
-      translation = utils.format_spm_text(output)
-    else:
-      translation = utils.format_text(output)
+  if subword_option == "bpe":  # BPE
+    fw_translation = utils.format_bpe_text(fw_output)
+    bw_translation = utils.format_bpe_text(bw_output)
+  elif subword_option == "spm":  # SPM
+    fw_translation = utils.format_spm_text(fw_output)
+    bw_translation = utils.format_spm_text(bw_output)
+  else:
+    fw_translation = utils.format_text(fw_output)
+    bw_translation = utils.format_text(bw_output)
 
-    translations.append(translation)
-
-  return translations
+  return (fw_translation, bw_translation)

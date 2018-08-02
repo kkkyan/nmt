@@ -1,0 +1,584 @@
+# Job id 0
+# hparams:
+  src=en
+  tgt=vi
+  train_prefix=nmt/testdata/iwslt15.tst2013.100
+  dev_prefix=nmt/testdata/iwslt15.tst2013.100
+  test_prefix=nmt/testdata/iwslt15.tst2013.100
+  out_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_infer
+# Vocab file nmt/testdata/iwslt15.vocab.100.en exists
+# Vocab file nmt/testdata/iwslt15.vocab.100.vi exists
+  saving hparams to C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_infer\hparams
+  saving hparams to C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_infer\best_bleu\hparams
+  attention=scaled_luong
+  attention_architecture=standard
+  avg_ckpts=False
+  batch_size=128
+  beam_width=10
+  best_bleu=0
+  best_bleu_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_infer\best_bleu
+  check_special_token=True
+  colocate_gradients_with_ops=True
+  decay_scheme=
+  dev_prefix=nmt/testdata/iwslt15.tst2013.100
+  dropout=0.2
+  embed_prefix=None
+  encoder_type=gnmt
+  eos=</s>
+  epoch_step=0
+  forget_bias=1.0
+  infer_batch_size=32
+  init_op=uniform
+  init_weight=0.1
+  learning_rate=1.0
+  length_penalty_weight=0.0
+  log_device_placement=False
+  max_gradient_norm=5.0
+  max_train=0
+  metrics=['bleu']
+  num_buckets=5
+  num_decoder_layers=2
+  num_decoder_residual_layers=0
+  num_embeddings_partitions=0
+  num_encoder_layers=2
+  num_encoder_residual_layers=0
+  num_gpus=0
+  num_inter_threads=0
+  num_intra_threads=0
+  num_keep_ckpts=5
+  num_layers=2
+  num_train_steps=1
+  num_translations_per_input=1
+  num_units=32
+  optimizer=sgd
+  out_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_infer
+  output_attention=True
+  override_loaded_hparams=False
+  pass_hidden_state=True
+  random_seed=None
+  residual=False
+  sampling_temperature=0.0
+  share_vocab=False
+  sos=<s>
+  src=en
+  src_embed_file=
+  src_max_len=50
+  src_max_len_infer=None
+  src_vocab_file=nmt/testdata/iwslt15.vocab.100.en
+  src_vocab_size=100
+  steps_per_external_eval=None
+  steps_per_stats=5
+  subword_option=
+  test_prefix=nmt/testdata/iwslt15.tst2013.100
+  tgt=vi
+  tgt_embed_file=
+  tgt_max_len=50
+  tgt_max_len_infer=None
+  tgt_vocab_file=nmt/testdata/iwslt15.vocab.100.vi
+  tgt_vocab_size=100
+  time_major=True
+  train_prefix=nmt/testdata/iwslt15.tst2013.100
+  unit_type=lstm
+  use_bibeam=False
+  vocab_prefix=nmt/testdata/iwslt15.vocab.100
+  warmup_scheme=t2t
+  warmup_steps=0
+# creating train graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  learning_rate=1, warmup_steps=0, warmup_scheme=t2t
+  decay_scheme=, start_decay_step=1, decay_steps 0, decay_factor 1
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# creating eval graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# creating infer graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# log_file=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_infer\log_1533198413
+  created train model with fresh parameters, time 0.34s
+  created infer model with fresh parameters, time 0.19s
+  # 44
+    src: Even after learning a new language and getting a job , their whole world can be turned upside down in an instant .
+# Job id 0
+# hparams:
+  src=en
+  tgt=vi
+  train_prefix=nmt/testdata/iwslt15.tst2013.100
+  dev_prefix=nmt/testdata/iwslt15.tst2013.100
+  test_prefix=nmt/testdata/iwslt15.tst2013.100
+  out_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test
+# Vocab file nmt/testdata/iwslt15.vocab.100.en exists
+# Vocab file nmt/testdata/iwslt15.vocab.100.vi exists
+  saving hparams to C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test\hparams
+  saving hparams to C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test\best_bleu\hparams
+  attention=scaled_luong
+  attention_architecture=standard
+  avg_ckpts=False
+  batch_size=128
+  beam_width=10
+  best_bleu=0
+  best_bleu_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test\best_bleu
+  check_special_token=True
+  colocate_gradients_with_ops=True
+  decay_scheme=
+  dev_prefix=nmt/testdata/iwslt15.tst2013.100
+  dropout=0.2
+  embed_prefix=None
+  encoder_type=gnmt
+  eos=</s>
+  epoch_step=0
+  forget_bias=1.0
+  infer_batch_size=32
+  init_op=uniform
+  init_weight=0.1
+  learning_rate=1.0
+  length_penalty_weight=0.0
+  log_device_placement=False
+  max_gradient_norm=5.0
+  max_train=0
+  metrics=['bleu']
+  num_buckets=5
+  num_decoder_layers=2
+  num_decoder_residual_layers=0
+  num_embeddings_partitions=0
+  num_encoder_layers=2
+  num_encoder_residual_layers=0
+  num_gpus=0
+  num_inter_threads=0
+  num_intra_threads=0
+  num_keep_ckpts=5
+  num_layers=2
+  num_train_steps=100
+  num_translations_per_input=1
+  num_units=32
+  optimizer=sgd
+  out_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test
+  output_attention=True
+  override_loaded_hparams=False
+  pass_hidden_state=True
+  random_seed=None
+  residual=False
+  sampling_temperature=0.0
+  share_vocab=False
+  sos=<s>
+  src=en
+  src_embed_file=
+  src_max_len=50
+  src_max_len_infer=None
+  src_vocab_file=nmt/testdata/iwslt15.vocab.100.en
+  src_vocab_size=100
+  steps_per_external_eval=None
+  steps_per_stats=5
+  subword_option=
+  test_prefix=nmt/testdata/iwslt15.tst2013.100
+  tgt=vi
+  tgt_embed_file=
+  tgt_max_len=50
+  tgt_max_len_infer=None
+  tgt_vocab_file=nmt/testdata/iwslt15.vocab.100.vi
+  tgt_vocab_size=100
+  time_major=True
+  train_prefix=nmt/testdata/iwslt15.tst2013.100
+  unit_type=lstm
+  use_bibeam=False
+  vocab_prefix=nmt/testdata/iwslt15.vocab.100
+  warmup_scheme=t2t
+  warmup_steps=0
+# creating train graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  learning_rate=1, warmup_steps=0, warmup_scheme=t2t
+  decay_scheme=, start_decay_step=100, decay_steps 0, decay_factor 1
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# creating eval graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# creating infer graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# log_file=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test\log_1533198423
+  created train model with fresh parameters, time 0.34s
+  created infer model with fresh parameters, time 0.19s
+  # 44
+    src: Even after learning a new language and getting a job , their whole world can be turned upside down in an instant .
+# Job id 0
+# hparams:
+  src=en
+  tgt=vi
+  train_prefix=nmt/testdata/iwslt15.tst2013.100
+  dev_prefix=nmt/testdata/iwslt15.tst2013.100
+  test_prefix=nmt/testdata/iwslt15.tst2013.100
+  out_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts
+# Vocab file nmt/testdata/iwslt15.vocab.100.en exists
+# Vocab file nmt/testdata/iwslt15.vocab.100.vi exists
+  saving hparams to C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts\hparams
+  saving hparams to C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts\best_bleu\hparams
+  attention=scaled_luong
+  attention_architecture=standard
+  avg_best_bleu=0
+  avg_best_bleu_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts\avg_best_bleu
+  avg_ckpts=True
+  batch_size=128
+  beam_width=10
+  best_bleu=0
+  best_bleu_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts\best_bleu
+  check_special_token=True
+  colocate_gradients_with_ops=True
+  decay_scheme=
+  dev_prefix=nmt/testdata/iwslt15.tst2013.100
+  dropout=0.2
+  embed_prefix=None
+  encoder_type=gnmt
+  eos=</s>
+  epoch_step=0
+  forget_bias=1.0
+  infer_batch_size=32
+  init_op=uniform
+  init_weight=0.1
+  learning_rate=1.0
+  length_penalty_weight=0.0
+  log_device_placement=False
+  max_gradient_norm=5.0
+  max_train=0
+  metrics=['bleu']
+  num_buckets=5
+  num_decoder_layers=2
+  num_decoder_residual_layers=0
+  num_embeddings_partitions=0
+  num_encoder_layers=2
+  num_encoder_residual_layers=0
+  num_gpus=0
+  num_inter_threads=0
+  num_intra_threads=0
+  num_keep_ckpts=5
+  num_layers=2
+  num_train_steps=100
+  num_translations_per_input=1
+  num_units=32
+  optimizer=sgd
+  out_dir=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts
+  output_attention=True
+  override_loaded_hparams=False
+  pass_hidden_state=True
+  random_seed=None
+  residual=False
+  sampling_temperature=0.0
+  share_vocab=False
+  sos=<s>
+  src=en
+  src_embed_file=
+  src_max_len=50
+  src_max_len_infer=None
+  src_vocab_file=nmt/testdata/iwslt15.vocab.100.en
+  src_vocab_size=100
+  steps_per_external_eval=None
+  steps_per_stats=5
+  subword_option=
+  test_prefix=nmt/testdata/iwslt15.tst2013.100
+  tgt=vi
+  tgt_embed_file=
+  tgt_max_len=50
+  tgt_max_len_infer=None
+  tgt_vocab_file=nmt/testdata/iwslt15.vocab.100.vi
+  tgt_vocab_size=100
+  time_major=True
+  train_prefix=nmt/testdata/iwslt15.tst2013.100
+  unit_type=lstm
+  use_bibeam=False
+  vocab_prefix=nmt/testdata/iwslt15.vocab.100
+  warmup_scheme=t2t
+  warmup_steps=0
+# creating train graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DropoutWrapper, dropout=0.2   DeviceWrapper, device=/cpu:0
+  learning_rate=1, warmup_steps=0, warmup_scheme=t2t
+  decay_scheme=, start_decay_step=100, decay_steps 0, decay_factor 1
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# creating eval graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# creating infer graph ...
+  num_bi_layers = 1
+  num_uni_layers = 1
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 0  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+  cell 1  LSTM, forget_bias=1  DeviceWrapper, device=/cpu:0
+# Trainable variables
+  embeddings/encoder/embedding_encoder:0, (100, 32), /device:GPU:0
+  embeddings/decoder/embedding_decoder:0, (100, 32), /device:GPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/fw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/bidirectional_rnn/bw/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/encoder/rnn/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/memory_layer/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/memory_layer_1/kernel:0, (32, 32), 
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/fw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+  dynamic_seq2seq/decoder/fw/output_projection/kernel:0, (32, 100), 
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/kernel:0, (96, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_0/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/kernel:0, (64, 128), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/multi_rnn_cell/cell_1/basic_lstm_cell/bias:0, (128,), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/luong_attention/attention_g:0, (), /device:CPU:0
+  dynamic_seq2seq/decoder/bw/bw_attention/attention_layer/kernel:0, (64, 32), /device:CPU:0
+# log_file=C:\Users\yk210\AppData\Local\Temp\runbws4ofvn\nmt_train_test_avg_ckpts\log_1533198433
+  created train model with fresh parameters, time 0.34s
+  created infer model with fresh parameters, time 0.20s
+  # 44
+    src: Even after learning a new language and getting a job , their whole world can be turned upside down in an instant .

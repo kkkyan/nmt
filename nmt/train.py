@@ -476,9 +476,9 @@ def _format_results(name, ppl, scores, metrics):
   if scores:
     for metric in metrics:
       if result_str:
-        result_str += ", %s %s %.1f" % (name, metric, scores[metric])
+        result_str += ", %s fw_%s %.1f, bw_%s %.1f" % (name, metric, scores[metric][0], metric, scores[metric][1])
       else:
-        result_str = "%s %s %.1f" % (name, metric, scores[metric])
+        result_str = "%s fw_%s %.1f, bw_%s %.1f" % (name, metric, scores[metric][0], metric, scores[metric][1])
   return result_str
 
 
@@ -522,15 +522,15 @@ def _sample_decode(model, global_step, sess, hparams, iterator, src_data,
     fw_nmt_outputs = fw_nmt_outputs[0]
     bw_nmt_outputs = bw_nmt_outputs[0]
 
-  translations = nmt_utils.get_translation(
+  (fw_translation, bw_translation) = nmt_utils.get_translation(
       (fw_nmt_outputs, bw_nmt_outputs),
       sent_id=0,
-      tgt_eos=(hparams.eos, hparams.sos),
+      tgt_eos=hparams.eos,
       subword_option=hparams.subword_option)
   utils.print_out("    src: %s" % src_data[decode_id])
   utils.print_out("    ref: %s" % tgt_data[decode_id])
-  utils.print_out(b"      fw nmt: " + translations[0])
-  utils.print_out(b"      bw nmt: " + translations[1])
+  utils.print_out(b"     fw nmt: " + fw_translation)
+  utils.print_out(b"     bw nmt: " + bw_translation)
 
   # Summary
   if attention_summary is not None:
@@ -552,17 +552,18 @@ def _external_eval(model, global_step, sess, hparams, iterator,
 
   sess.run(iterator.initializer, feed_dict=iterator_feed_dict)
 
-  output = os.path.join(out_dir, "output_%s" % label)
+  fw_output = os.path.join(out_dir, "output_%s_fw" % label)
+  bw_output = os.path.join(out_dir, "output_%s_bw" % label)
   scores = nmt_utils.decode_and_evaluate(
       label,
       model,
       sess,
-      output,
+      (fw_output, bw_output),
       ref_file=tgt_file,
       metrics=hparams.metrics,
       subword_option=hparams.subword_option,
       beam_width=hparams.beam_width,
-      tgt_eos=(hparams.eos, hparams.sos),
+      tgt_eos=hparams.eos,
       decode=decode)
   # Save on best metrics
   if decode:
@@ -572,11 +573,13 @@ def _external_eval(model, global_step, sess, hparams, iterator,
       else:
         best_metric_label = "best_" + metric
 
-      utils.add_summary(summary_writer, global_step, "%s_%s" % (label, metric),
-                        scores[metric])
+      utils.add_summary(summary_writer, global_step, "%s_%s_fw" % (label, metric),
+                        scores[metric][0])
+      utils.add_summary(summary_writer, global_step, "%s_%s_bw" % (label, metric),
+                        scores[metric][1])
       # metric: larger is better
-      if save_on_best and scores[metric] > getattr(hparams, best_metric_label):
-        setattr(hparams, best_metric_label, scores[metric])
+      if save_on_best and scores[metric][0] > getattr(hparams, best_metric_label):
+        setattr(hparams, best_metric_label, scores[metric][0])
         model.saver.save(
             sess,
             os.path.join(

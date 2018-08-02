@@ -63,9 +63,7 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
   if not isinstance(fw_decoder, tf.contrib.seq2seq.BeamSearchDecoder):
     # no beam search
     fw_rnn_output = fw_final_outputs.rnn_output
-    bw_rnn_output = _reverse(
-      bw_final_outputs.rnn_output, seq_lengths=bw_final_sequence_lengths,
-      seq_dim=time_dim, batch_dim=batch_dim)
+    bw_rnn_output = bw_final_outputs.rnn_output
   else:
     fw_rnn_output = tf.no_op()
     bw_rnn_output = tf.no_op()

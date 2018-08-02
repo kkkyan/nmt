@@ -388,10 +388,15 @@ class BaseModel(object):
       if self.mode != tf.contrib.learn.ModeKeys.INFER:
         # decoder_emp_inp: [max_time, batch_size, num_units]
         target_input = iterator.target_input
+        # all re_ is reversed data for back ward
+        re_target_input = iterator.re_target_input
         if self.time_major:
           target_input = tf.transpose(target_input)
+          re_target_input = tf.transpose(re_target_input)
         decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, target_input)
+        re_decoder_emb_inp = tf.nn.embedding_lookup(
+            self.embedding_decoder, re_target_input)
 
         # fw_decoder
         # Helper
@@ -406,13 +411,9 @@ class BaseModel(object):
 
         # bw_decoder
         # bw_helper need to reverse input
-        batch_dim = 1 if self.time_major else 0
-        seq_dim = 1 - batch_dim
-        reverse_decoder_emb_inp = tf.reverse_sequence(decoder_emb_inp, iterator.target_sequence_length,
-                                                          seq_dim=seq_dim, batch_dim=batch_dim)
         # helper
         bw_helper = tf.contrib.seq2seq.TrainingHelper(
-            reverse_decoder_emb_inp, iterator.target_sequence_length,
+            re_decoder_emb_inp, iterator.target_sequence_length,
             time_major=self.time_major)
         # Decoder
         bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
@@ -421,6 +422,7 @@ class BaseModel(object):
             bw_decoder_initial_state, output_layer=self.output_layer)
 
         # decode
+        # use re_tgt_output to calculate loss so we don't need to reverse decode result
         (fw_rnn_output, bw_rnn_output), \
         (fw_final_context_state, bw_final_context_state), \
         (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode(
@@ -447,8 +449,8 @@ class BaseModel(object):
         length_penalty_weight = hparams.length_penalty_weight
         start_tokens = tf.fill([self.batch_size], tgt_sos_id)
         end_token = tgt_eos_id
-        bw_start_tokens = tf.fill([self.batch_size], tgt_eos_id)
-        bw_end_token = tgt_sos_id
+        bw_start_tokens = tf.fill([self.batch_size], tgt_sos_id)
+        bw_end_token = tgt_eos_id
 
         if beam_width > 0:
           fw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
@@ -537,13 +539,18 @@ class BaseModel(object):
   def _compute_loss(self, fw_logits, bw_logits):
     """Compute optimization loss."""
     target_output = self.iterator.target_output
+    re_target_output = self.iterator.re_target_output
     if self.time_major:
       target_output = tf.transpose(target_output)
+      re_target_output = tf.transpose(re_target_output)
+    # fw and bw have the same max time
     max_time = self.get_max_time(target_output)
+
     fw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=target_output, logits=fw_logits)
     bw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        labels=target_output, logits=bw_logits)
+        labels=re_target_output, logits=bw_logits)
+
     target_weights = tf.sequence_mask(
         self.iterator.target_sequence_length, max_time, dtype=fw_logits.dtype)
     if self.time_major:
