@@ -599,8 +599,7 @@ def compute_perplexity(model, sess, name):
       fw_loss, bw_loss, predict_count, batch_size = model.eval(sess)
       fw_total_loss += fw_loss * batch_size
       bw_total_loss += bw_loss * batch_size
-      loss_sum = fw_total_loss + bw_total_loss
-      total_loss += loss_sum
+      total_loss = fw_total_loss + bw_total_loss
       total_predict_count += predict_count
     except tf.errors.OutOfRangeError:
       break
