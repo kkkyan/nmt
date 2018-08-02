@@ -605,9 +605,9 @@ def compute_perplexity(model, sess, name):
     except tf.errors.OutOfRangeError:
       break
 
-  fw_perplexity = utils.safe_exp(fw_total_loss / total_predict_count)
-  bw_perplexity = utils.safe_exp(bw_total_loss / total_predict_count)
-  perplexity = utils.safe_exp(total_loss / total_predict_count)
+  fw_perplexity = utils.safe_exp(fw_total_loss / total_predict_count, name="fw_ppl")
+  bw_perplexity = utils.safe_exp(bw_total_loss / total_predict_count, name="bw_ppl")
+  perplexity = utils.safe_exp(total_loss / (2*total_predict_count), name="total_ppl")
   utils.print_time("  eval %s: fw_perplexity %.2f , bw_perplexity %.2f , total %.2f" % (name, fw_perplexity, bw_perplexity, perplexity),
                    start_time)
   return fw_perplexity, bw_perplexity, perplexity

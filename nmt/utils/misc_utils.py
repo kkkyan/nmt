@@ -34,12 +34,13 @@ def check_tensorflow_version():
     raise EnvironmentError("Tensorflow version must >= %s" % min_tf_version)
 
 
-def safe_exp(value):
+def safe_exp(value, name):
   """Exponentiation with catching of overflow error."""
   try:
     ans = math.exp(value)
   except OverflowError:
     ans = float("inf")
+    print(name, "get overflow error")
   return ans
 
 
