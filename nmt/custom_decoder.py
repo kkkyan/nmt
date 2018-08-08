@@ -31,8 +31,9 @@ class BasicDecoder_att(basic_decoder.BasicDecoder):
         with tf.name_scope("AssignAttentionValues", nest.flatten(memory)):
             for i in range(att_mes_len):
                 att_me = att_mes[i]
-                assign_op = tf.assign(att_me._values, _prepare_memory(
+                att_me._values =  _prepare_memory(
                             memory, memory_sequence_length,
-                            check_inner_dims_defined=check_inner_dims_defined))
-                with tf.control_dependencies([assign_op]):
-                    att_me._keys = tf.identity(att_me._keys)
+                            check_inner_dims_defined=check_inner_dims_defined)
+                att_me._keys = (
+                        att_me.memory_layer(att_me._values) if att_me.memory_layer  # pylint: disable=not-callable
+                        else att_me._values)
