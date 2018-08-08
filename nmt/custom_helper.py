@@ -49,14 +49,25 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
   with tf.variable_scope(scope,"bi_decoder") as scope:
     # Forward
     with tf.variable_scope("fw") as fw_scope:
-      fw_final_outputs, fw_final_state, fw_final_sequence_lengths,fw_origin_outputs = dynamic_decode(
-        fw_decoder, output_time_major=output_time_major, 
-        impute_finished=impute_finished, 
-        maximum_iterations=maximum_iterations,
-        parallel_iterations=parallel_iterations, 
-        swap_memory=swap_memory,
-        scope=fw_scope
-      )
+      if not isinstance(fw_decoder, tf.contrib.seq2seq.BeamSearchDecoder):
+        fw_final_outputs, fw_final_state, fw_final_sequence_lengths,fw_origin_outputs = dynamic_decode(
+          fw_decoder, output_time_major=output_time_major, 
+          impute_finished=impute_finished, 
+          maximum_iterations=maximum_iterations,
+          parallel_iterations=parallel_iterations, 
+          swap_memory=swap_memory,
+          scope=fw_scope
+        )
+      else:
+        fw_final_outputs, fw_final_state, fw_final_sequence_lengths = tf.contrib.seq2seq.dynamic_decode(
+          fw_decoder, output_time_major=output_time_major, 
+          impute_finished=impute_finished, 
+          maximum_iterations=maximum_iterations,
+          parallel_iterations=parallel_iterations, 
+          swap_memory=swap_memory,
+          scope=fw_scope
+        )
+
 
     # Backward direction
     if not output_time_major:
@@ -75,14 +86,24 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
         return tf.reverse(input_, axis=[seq_dim])
 
     with tf.variable_scope("bw") as bw_scope:
-      bw_final_outputs, bw_final_state, bw_final_sequence_lengths, bw_origin_outputs= dynamic_decode(
-        bw_decoder, output_time_major=output_time_major, 
-        impute_finished=impute_finished, 
-        maximum_iterations=maximum_iterations,
-        parallel_iterations=parallel_iterations, 
-        swap_memory=swap_memory,
-        scope=bw_scope
-      )
+      if not isinstance(bw_decoder, tf.contrib.seq2seq.BeamSearchDecoder):
+        bw_final_outputs, bw_final_state, bw_final_sequence_lengths, bw_origin_outputs= dynamic_decode(
+          bw_decoder, output_time_major=output_time_major, 
+          impute_finished=impute_finished, 
+          maximum_iterations=maximum_iterations,
+          parallel_iterations=parallel_iterations, 
+          swap_memory=swap_memory,
+          scope=bw_scope
+        )
+      else:
+        bw_final_outputs, bw_final_state, bw_final_sequence_lengths= tf.contrib.seq2seq.dynamic_decode(
+          bw_decoder, output_time_major=output_time_major, 
+          impute_finished=impute_finished, 
+          maximum_iterations=maximum_iterations,
+          parallel_iterations=parallel_iterations, 
+          swap_memory=swap_memory,
+          scope=bw_scope
+        )
   
   if not isinstance(fw_decoder, tf.contrib.seq2seq.BeamSearchDecoder):
     # no beam search
@@ -91,6 +112,8 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
   else:
     fw_rnn_output = tf.no_op()
     bw_rnn_output = tf.no_op()
+    fw_origin_outputs = tf.no_op()
+    bw_origin_outputs = tf.no_op()
 
   rnn_outputs = (fw_rnn_output, bw_rnn_output)
   output_states = (fw_final_state, bw_final_state)
@@ -102,6 +125,7 @@ def dynamic_bidecode(fw_decoder, bw_decoder,
     return (rnn_outputs, output_states, decoder_outputs)
   else:
     return (rnn_outputs, output_states, decoder_outputs, final_seq_lengths, origin_rnn_outputs)
+
 
 
 def dynamic_bidecode_att(fw_decoder, bw_decoder,
@@ -128,7 +152,7 @@ def dynamic_bidecode_att(fw_decoder, bw_decoder,
     fw_assgin = fw_decoder.set_attention_values(fw_origin_output, fw_rnn_lengths)
     bw_assgin = bw_decoder.set_attention_values(bw_origin_output, bw_rnn_lengths)
 
-    with tf.control_dependencies([fw_assgin, bw_assgin]):
+    with tf.control_dependencies(fw_assgin + bw_assgin):
       # third, re-run dynamic_bidecode and return
       return dynamic_bidecode(fw_decoder, bw_decoder,
                                     output_time_major,
