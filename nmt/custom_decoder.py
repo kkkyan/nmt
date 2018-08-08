@@ -28,7 +28,7 @@ __all__ = [
 
 class BasicDecoder_att(basic_decoder.BasicDecoder):
     def __init__(self, cell, helper, initial_state, output_layer=None):
-        self.decoder_output_size = cell._attention_layer_size[0]
+        self.decoder_output_size = cell._attention_mechanisms[-1].get_shape()[-1].value
         super(BasicDecoder_att,self).__init__(cell, helper, initial_state, output_layer=output_layer)
 
     def set_attention_values(self, memory, memory_sequence_length, check_inner_dims_defined=True):
