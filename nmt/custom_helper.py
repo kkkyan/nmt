@@ -86,7 +86,7 @@ def dynamic_bidecode_att(fw_decoder, bw_decoder,
                    parallel_iterations=32,
                    swap_memory=False,
                    scope=None):
-  first_bidecode = dynamic_bidecode(fw_decoder, bw_decoder,
+  (rnn_outputs, _, _, final_seq_lengths) = dynamic_bidecode(fw_decoder, bw_decoder,
                                     output_time_major,
                                     impute_finished,
                                     maximum_iterations,
@@ -94,9 +94,8 @@ def dynamic_bidecode_att(fw_decoder, bw_decoder,
                                     swap_memory,
                                     scope, True)
   # first, run fw and bw decode with default attention
-  with tf.control_dependencies([first_bidecode]):
+  with tf.control_dependencies([rnn_outputs]):
     #second, assign rnn_output to new attention.values
-    (rnn_outputs, _, _, final_seq_lengths) =  first_bidecode
     fw_rnn_output, bw_rnn_output = rnn_outputs
     fw_rnn_lengths, bw_rnn_lengths = final_seq_lengths
 

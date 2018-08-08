@@ -28,7 +28,7 @@ from . import model_helper
 from . import custom_helper
 from .utils import iterator_utils
 from .utils import misc_utils as utils
-from custom_decoder import BasicDecoder_att
+from .custom_decoder import BasicDecoder_att
 
 utils.check_tensorflow_version()
 
