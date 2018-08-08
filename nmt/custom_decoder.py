@@ -66,5 +66,5 @@ class BasicDecoder_att(basic_decoder.BasicDecoder):
               outputs=cell_outputs,
               state=cell_state,
               sample_ids=sample_ids)
-        outputs = BasicDecoderOutput(cell_outputs, sample_ids)
+        outputs = basic_decoder.BasicDecoderOutput(cell_outputs, sample_ids)
         return (outputs, next_state, next_inputs, finished, origin_cell_outputs)
