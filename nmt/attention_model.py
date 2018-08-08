@@ -145,12 +145,12 @@ class AttentionModel(model.Model):
         name="bw_attention")
 
     # TODO(thangluong): do we need num_layers, num_gpus?
-    fw_cell = tf.contrib.rnn.DeviceWrapper(fw_cell,
-                                        model_helper.get_device_str(
-                                            num_layers - 1, self.num_gpus))
-    bw_cell = tf.contrib.rnn.DeviceWrapper(bw_cell,
-                                        model_helper.get_device_str(
-                                            num_layers - 1, self.num_gpus))
+    # fw_cell = tf.contrib.rnn.DeviceWrapper(fw_cell,
+    #                                     model_helper.get_device_str(
+    #                                         num_layers - 1, self.num_gpus))
+    # bw_cell = tf.contrib.rnn.DeviceWrapper(bw_cell,
+    #                                     model_helper.get_device_str(
+    #                                         num_layers - 1, self.num_gpus))
 
     if hparams.pass_hidden_state:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype).clone(
