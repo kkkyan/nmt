@@ -241,7 +241,7 @@ def dynamic_decode(decoder,
                                             tf.float32)
 
     def condition(unused_time, unused_outputs_ta, unused_state, unused_inputs,
-                  finished, unused_sequence_lengths):
+                  finished, unused_sequence_lengths, origin_outputs):
       return math_ops.logical_not(math_ops.reduce_all(finished))
 
     def body(time, outputs_ta, state, inputs, finished, sequence_lengths):
