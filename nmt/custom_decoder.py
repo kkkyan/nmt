@@ -34,6 +34,7 @@ class BasicDecoder_att(basic_decoder.BasicDecoder):
     def set_attention_values(self, memory, memory_sequence_length, check_inner_dims_defined=True):
         att_mes = self._cell._attention_mechanisms
         att_mes_len = len(att_mes)
+        tensors = []
         with tf.name_scope("AssignAttentionValues", nest.flatten(memory)):
             for i in range(att_mes_len):
                 att_me = att_mes[i]
@@ -43,6 +44,12 @@ class BasicDecoder_att(basic_decoder.BasicDecoder):
                 att_me._keys = (
                         att_me.memory_layer(att_me._values) if att_me.memory_layer  # pylint: disable=not-callable
                         else att_me._values)
+                
+                tensors.append(att_me._values)
+                tensors.append(att_me._keys)
+        
+        return tensors
+        
 
     def step(self, time, inputs, state, name=None):
         """Perform a decoding step.
