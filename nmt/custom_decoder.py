@@ -56,7 +56,7 @@ class BasicDecoder_att(basic_decoder.BasicDecoder):
         Returns:
           `(outputs, next_state, next_inputs, finished)`.
         """
-        print("this is new step")
+        # print("this is new step")
         with ops.name_scope(name, "BasicDecoderStep", (time, inputs, state)):
           origin_cell_outputs, cell_state = self._cell(inputs, state)
           if self._output_layer is not None:
