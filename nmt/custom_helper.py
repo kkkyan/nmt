@@ -244,7 +244,7 @@ def dynamic_decode(decoder,
                   finished, unused_sequence_lengths, origin_outputs):
       return math_ops.logical_not(math_ops.reduce_all(finished))
 
-    def body(time, outputs_ta, state, inputs, finished, sequence_lengths):
+    def body(time, outputs_ta, state, inputs, finished, sequence_lengths, origin_output):
       """Internal while_loop body.
 
       Args:
