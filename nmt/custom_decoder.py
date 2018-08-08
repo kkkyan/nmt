@@ -28,6 +28,7 @@ __all__ = [
 
 class BasicDecoder_att(basic_decoder.BasicDecoder):
     def __init__(self, cell, helper, initial_state, output_layer=None):
+        self.decoder_output_size = cell._attention_layer_size[0]
         super(BasicDecoder_att,self).__init__(cell, helper, initial_state, output_layer=output_layer)
 
     def set_attention_values(self, memory, memory_sequence_length, check_inner_dims_defined=True):
@@ -55,6 +56,7 @@ class BasicDecoder_att(basic_decoder.BasicDecoder):
         Returns:
           `(outputs, next_state, next_inputs, finished)`.
         """
+        print("this is new step")
         with ops.name_scope(name, "BasicDecoderStep", (time, inputs, state)):
           origin_cell_outputs, cell_state = self._cell(inputs, state)
           if self._output_layer is not None:

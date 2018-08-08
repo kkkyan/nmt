@@ -237,6 +237,8 @@ def dynamic_decode(decoder,
 
     initial_outputs_ta = nest.map_structure(_create_ta, decoder.output_size,
                                             decoder.output_dtype)
+    initial_origin_outputs_ta = nest.map_structure(_create_ta, decoder.decoder_output_size,
+                                            decoder.output_dtype)
 
     def condition(unused_time, unused_outputs_ta, unused_state, unused_inputs,
                   finished, unused_sequence_lengths):
@@ -313,6 +315,7 @@ def dynamic_decode(decoder,
             initial_inputs,
             initial_finished,
             initial_sequence_lengths,
+            initial_origin_outputs_ta
         ),
         parallel_iterations=parallel_iterations,
         maximum_iterations=maximum_iterations,
