@@ -14,7 +14,12 @@ import numpy as np
 from tensorflow.contrib.seq2seq.python.ops import basic_decoder
 from tensorflow.contrib.seq2seq.python.ops.attention_wrapper import _prepare_memory
 from tensorflow.contrib.framework import nest
-
+from tensorflow.contrib.seq2seq.python.ops import decoder
+from tensorflow.contrib.seq2seq.python.ops import helper as helper_py
+from tensorflow.python.framework import ops
+from tensorflow.python.framework import tensor_shape
+from tensorflow.python.layers import base as layers_base
+from tensorflow.python.ops import rnn_cell_impl
 
 __all__ = [
     "BasicDecoder_att"
