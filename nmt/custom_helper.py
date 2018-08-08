@@ -244,10 +244,10 @@ def dynamic_decode(decoder,
                                             tf.float32)
 
     def condition(unused_time, unused_outputs_ta, unused_state, unused_inputs,
-                  finished, unused_sequence_lengths, origin_outputs):
+                  finished, unused_sequence_lengths, unused_origin_outputs_ta):
       return math_ops.logical_not(math_ops.reduce_all(finished))
 
-    def body(time, outputs_ta, state, inputs, finished, sequence_lengths, origin_output):
+    def body(time, outputs_ta, state, inputs, finished, sequence_lengths, origin_outputs_ta):
       """Internal while_loop body.
 
       Args:
@@ -264,7 +264,7 @@ def dynamic_decode(decoder,
         ```
       """
       (next_outputs, decoder_state, next_inputs,
-       decoder_finished, next_origin_outpus) = decoder.step(time, inputs, state)
+       decoder_finished, next_origin_outputs) = decoder.step(time, inputs, state)
       if decoder.tracks_own_finished:
         next_finished = decoder_finished
       else:
@@ -313,7 +313,7 @@ def dynamic_decode(decoder,
       origin_outputs_ta = nest.map_structure(lambda ta, out: ta.write(time, out),
                                       origin_outputs_ta, origin_emit)
       return (time + 1, outputs_ta, next_state, next_inputs, next_finished,
-              next_sequence_lengths, origin_outpus_ta)
+              next_sequence_lengths, origin_outputs_ta)
 
     res = control_flow_ops.while_loop(
         condition,
