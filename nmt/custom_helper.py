@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib.seq2seq.python.ops.decoder import Decoder
 
 
-__all__ = ["dynamic_bidecode", "dynamic_decode_att"]
+__all__ = ["dynamic_bidecode", "dynamic_bidecode_att"]
 
 
 
@@ -112,5 +112,3 @@ def dynamic_bidecode_att(fw_decoder, bw_decoder,
                                     parallel_iterations,
                                     swap_memory,
                                     scope)
-
-
