@@ -203,6 +203,9 @@ def dynamic_decode(decoder,
     zero_outputs = _create_zero_outputs(decoder.output_size,
                                         decoder.output_dtype,
                                         decoder.batch_size)
+    origin_zero_outputs = _create_zero_outputs(decoder.decoder_output_size,
+                                        dtypes.float32,
+                                        decoder.batch_size)
 
     is_xla = False
     if any([_is_xla_tensor(i) for i in nest.flatten(initial_inputs)]):
@@ -261,7 +264,7 @@ def dynamic_decode(decoder,
         ```
       """
       (next_outputs, decoder_state, next_inputs,
-       decoder_finished, origin_rnn_outpus) = decoder.step(time, inputs, state)
+       decoder_finished, next_origin_outpus) = decoder.step(time, inputs, state)
       if decoder.tracks_own_finished:
         next_finished = decoder_finished
       else:
@@ -281,8 +284,13 @@ def dynamic_decode(decoder,
             lambda out, zero: array_ops.where(finished, zero, out),
             next_outputs,
             zero_outputs)
+        origin_emit = nest.map_structure(
+            lambda out, zero: array_ops.where(finished, zero, out),
+            next_origin_outputs,
+            origin_zero_outputs)
       else:
         emit = next_outputs
+        origin_emit = next_origin_outputs
 
       # Copy through states past finish
       def _maybe_copy_state(new, cur):
@@ -302,8 +310,10 @@ def dynamic_decode(decoder,
 
       outputs_ta = nest.map_structure(lambda ta, out: ta.write(time, out),
                                       outputs_ta, emit)
+      origin_outputs_ta = nest.map_structure(lambda ta, out: ta.write(time, out),
+                                      origin_outputs_ta, origin_emit)
       return (time + 1, outputs_ta, next_state, next_inputs, next_finished,
-              next_sequence_lengths, origin_rnn_outpus)
+              next_sequence_lengths, origin_outpus_ta)
 
     res = control_flow_ops.while_loop(
         condition,
