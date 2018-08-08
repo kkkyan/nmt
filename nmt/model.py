@@ -28,6 +28,7 @@ from . import model_helper
 from . import custom_helper
 from .utils import iterator_utils
 from .utils import misc_utils as utils
+from custom_decoder import BasicDecoder_att
 
 utils.check_tensorflow_version()
 
@@ -404,7 +405,7 @@ class BaseModel(object):
               decoder_emb_inp, iterator.target_sequence_length,
               time_major=self.time_major)
         # Decoder
-        fw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
+        fw_my_decoder = BasicDecoder_att(
             fw_cell,
             fw_helper,
             fw_decoder_initial_state,output_layer=self.output_layer)
@@ -416,7 +417,7 @@ class BaseModel(object):
             re_decoder_emb_inp, iterator.target_sequence_length,
             time_major=self.time_major)
         # Decoder
-        bw_my_decoder = tf.contrib.seq2seq.BasicDecoder(
+        bw_my_decoder = BasicDecoder_att(
             bw_cell,
             bw_helper,
             bw_decoder_initial_state, output_layer=self.output_layer)
@@ -425,7 +426,7 @@ class BaseModel(object):
         # use re_tgt_output to calculate loss so we don't need to reverse decode result
         (fw_rnn_output, bw_rnn_output), \
         (fw_final_context_state, bw_final_context_state), \
-        (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode(
+        (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode_att(
           fw_my_decoder, bw_my_decoder,
           output_time_major=self.time_major,
           swap_memory=True,
