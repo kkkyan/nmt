@@ -301,6 +301,7 @@ def dynamic_decode(decoder,
       nest.assert_same_structure(state, decoder_state)
       nest.assert_same_structure(outputs_ta, next_outputs)
       nest.assert_same_structure(inputs, next_inputs)
+      nest.assert_same_structure(origin_outputs_ta, next_origin_outputs)
 
       # Zero out output values past finish
       if impute_finished:
