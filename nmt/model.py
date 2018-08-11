@@ -404,10 +404,13 @@ class BaseModel(object):
         fw_helper = tf.contrib.seq2seq.TrainingHelper(
               decoder_emb_inp, iterator.target_sequence_length,
               time_major=self.time_major)
+        fw_helper_bak = tf.contrib.seq2seq.TrainingHelper(
+              decoder_emb_inp, iterator.target_sequence_length,
+              time_major=self.time_major)
         # Decoder
         fw_my_decoder = BasicDecoder_att(
             fw_cell,
-            fw_helper,
+            fw_helper, fw_helper_bak,
             fw_decoder_initial_state,output_layer=self.output_layer)
 
         # bw_decoder
@@ -416,10 +419,13 @@ class BaseModel(object):
         bw_helper = tf.contrib.seq2seq.TrainingHelper(
             re_decoder_emb_inp, iterator.target_sequence_length,
             time_major=self.time_major)
+        bw_helper_bak = tf.contrib.seq2seq.TrainingHelper(
+            re_decoder_emb_inp, iterator.target_sequence_length,
+            time_major=self.time_major)
         # Decoder
         bw_my_decoder = BasicDecoder_att(
             bw_cell,
-            bw_helper,
+            bw_helper, bw_helper_bak,
             bw_decoder_initial_state, output_layer=self.output_layer)
 
         # decode
