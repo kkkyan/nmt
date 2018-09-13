@@ -92,7 +92,7 @@ class NMTTest(tf.test.TestCase):
     FLAGS.num_train_steps = 1
     default_hparams = nmt.create_hparams(FLAGS)
     train_fn = train.train
-    nmt.run_main(FLAGS, default_hparams, train_fn, None)
+    # nmt.run_main(FLAGS, default_hparams, train_fn, None)
 
     # Update FLAGS for inference.
     FLAGS.inference_input_file = ("nmt/testdata/"
@@ -104,7 +104,7 @@ class NMTTest(tf.test.TestCase):
     default_hparams = nmt.create_hparams(FLAGS)
 
     inference_fn = inference.inference
-    nmt.run_main(FLAGS, default_hparams, None, inference_fn)
+    # nmt.run_main(FLAGS, default_hparams, None, inference_fn)
 
 
 if __name__ == "__main__":
