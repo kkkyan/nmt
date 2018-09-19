@@ -143,7 +143,14 @@ class BasicDecoder_att(decoder.Decoder):
     outputs = BasicDecoderOutput(cell_outputs, before_output_layer, sample_ids)
     return (outputs, next_state, next_inputs, finished)
 
+  '''
+    If set attention_values, the att_mes !!!AUTO!!! change to the _att_me_twice
+  '''
   def set_attention_values(self, memory, memory_sequence_length, check_inner_dims_defined=True):
+    # auto change
+    self._cell._attention_mechanisms = self._cell._attention_mechanisms_twice
+    # self._cell._attention_layers = self._cell._attention_layers_twice
+
     att_mes = self._cell._attention_mechanisms
     att_mes_len = len(att_mes)
     tensors = []

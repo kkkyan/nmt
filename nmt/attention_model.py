@@ -21,6 +21,7 @@ import tensorflow as tf
 
 from . import model
 from . import model_helper
+from . import customer_attwrapper
 
 __all__ = ["AttentionModel"]
 
@@ -101,6 +102,10 @@ class AttentionModel(model.Model):
         attention_option, num_units, memory, source_sequence_length, self.mode, name="fw_LuongAttention")
     bw_attention_mechanism = self.attention_mechanism_fn(
         attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention")
+    fw_attention_mechanism_twice = self.attention_mechanism_fn(
+        attention_option, num_units, memory, source_sequence_length, self.mode, name="fw_LuongAttention_twice")
+    bw_attention_mechanism_twice = self.attention_mechanism_fn(
+        attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention_twice")
 
     fw_cell = model_helper.create_rnn_cell(
         unit_type=hparams.unit_type,
@@ -128,17 +133,19 @@ class AttentionModel(model.Model):
     alignment_history = (self.mode == tf.contrib.learn.ModeKeys.INFER and
                          beam_width == 0)
 
-    fw_cell = tf.contrib.seq2seq.AttentionWrapper(
+    fw_cell = customer_attwrapper.AttentionWrapper(
         fw_cell,
         fw_attention_mechanism,
+        fw_attention_mechanism_twice,
         attention_layer_size=num_units,
         alignment_history=alignment_history,
         output_attention=hparams.output_attention,
         name="fw_attention")
 
-    bw_cell = tf.contrib.seq2seq.AttentionWrapper(
+    bw_cell = customer_attwrapper.AttentionWrapper(
         bw_cell,
         bw_attention_mechanism,
+        bw_attention_mechanism_twice,
         attention_layer_size=num_units,
         alignment_history=alignment_history,
         output_attention=hparams.output_attention,
@@ -176,10 +183,10 @@ def create_attention_mechanism(attention_option, num_units, memory,
 
   # Mechanism
   if attention_option == "luong":
-    attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+    attention_mechanism = customer_attwrapper.LuongAttention(
         num_units, memory, memory_sequence_length=source_sequence_length, name=name)
   elif attention_option == "scaled_luong":
-    attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+    attention_mechanism = customer_attwrapper.LuongAttention(
         num_units,
         memory,
         memory_sequence_length=source_sequence_length,
