@@ -70,7 +70,7 @@ def decode_and_evaluate(name,
           for sent_id in range(batch_size):
             for beam_id in range(num_translations_per_input):
               (fw_translation, bw_translation) = get_translation(
-                  (fw_nmt_outputs[beam_id], bw_nmt_outputs[beam_id]),
+                  (fw_nmt_outputs[beam_id], bw_nmt_outputs),
                   sent_id,
                   tgt_eos=tgt_eos,
                   subword_option=subword_option)
@@ -106,7 +106,9 @@ def get_translation(nmt_outputs, sent_id, tgt_eos, subword_option):
   fw_nmt_output, bw_nmt_output = nmt_outputs
   # Select a sentence
   fw_output = fw_nmt_output[sent_id, :].tolist()
-  bw_output = bw_nmt_output[sent_id, :].tolist()
+  bw_output = bw_nmt_output[sent_id]
+  if not isinstance(bw_output, list):
+    bw_output = list(bw_output)
 
   # If there is an eos symbol in outputs, cut them at that point.
   if tgt_eos and tgt_eos in fw_output:

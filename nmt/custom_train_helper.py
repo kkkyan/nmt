@@ -229,7 +229,7 @@ class TrainingHelper(tf.contrib.seq2seq.Helper):
       all_finished = math_ops.reduce_all(finished)
       next_inputs = control_flow_ops.cond(
           all_finished, lambda: self._real_zero_inputs,
-          lambda: array_ops.concat([self._zero_inputs,self._input_tas.read(0), self._zero_inputs],1)
+          lambda: array_ops.concat([self._zero_inputs, self._input_tas.read(0), self._zero_inputs],1)
         )
       
       return (finished, next_inputs)
@@ -252,9 +252,10 @@ class TrainingHelper(tf.contrib.seq2seq.Helper):
         if next_time == self._sequence_length - 1:
           next_input = self._zero_inputs
         else:
-          next_input = inp.read(next_time+1)
+          next_input = self._zero_inputs
+          # next_input = inp.read(next_time+1)
 
-        return array_ops.concat([inp.read(time),inp.read(next_time),next_input],1)
+        return array_ops.concat([next_input,inp.read(next_time),next_input],1)
 
       next_inputs = control_flow_ops.cond(
           all_finished, lambda: self._real_zero_inputs,

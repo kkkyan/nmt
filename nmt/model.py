@@ -421,12 +421,16 @@ class BaseModel(object):
         # bw_decoder
         # bw run after fw finish
         bw_target_input = fw_rnn_output.sample_id
-        if self.time_major:
-          bw_target_input = tf.transpose(bw_target_input)
+        # if self.time_major:
+        #   bw_target_input = tf.transpose(bw_target_input)
         bw_decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, bw_target_input)
+
+        print(fw_final_sequence_length)
+
         # helper
-        bw_helper = custom_train_helper.TrainingHelper(
+        # bw_helper = custom_train_helper.TrainingHelper(
+        bw_helper = tf.contrib.seq2seq.TrainingHelper(
             bw_decoder_emb_inp, fw_final_sequence_length,
             time_major=self.time_major)
         # Decoder
@@ -490,12 +494,12 @@ class BaseModel(object):
         # bw_decoder
         # bw run after fw finish
         bw_target_input = fw_rnn_output.predicted_ids[:,:,0]
-        if self.time_major:
-          bw_target_input = tf.transpose(bw_target_input)
+        # if self.time_major:
+        #   bw_target_input = tf.transpose(bw_target_input)
         bw_decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, bw_target_input)
         # helper
-        bw_helper = custom_train_helper.TrainingHelper(
+        bw_helper = tf.contrib.seq2seq.TrainingHelper(
             bw_decoder_emb_inp, fw_final_sequence_length[:,0],
             time_major=self.time_major)
         # Decoder
@@ -544,17 +548,15 @@ class BaseModel(object):
   def _compute_loss(self, fw_logits, bw_logits):
     """Compute optimization loss."""
     target_output = self.iterator.target_output
-    re_target_output = self.iterator.re_target_output
     if self.time_major:
       target_output = tf.transpose(target_output)
-      re_target_output = tf.transpose(re_target_output)
     # fw and bw have the same max time
     max_time = self.get_max_time(target_output)
 
     fw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=target_output, logits=fw_logits)
     bw_crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        labels=re_target_output, logits=bw_logits)
+        labels=target_output, logits=bw_logits)
 
     target_weights = tf.sequence_mask(
         self.iterator.target_sequence_length, max_time, dtype=fw_logits.dtype)

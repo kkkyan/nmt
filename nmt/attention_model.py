@@ -87,12 +87,13 @@ class AttentionModel(model.Model):
     else:
       memory = encoder_outputs
 
+    fw_encoder_state = encoder_state
     if self.mode == tf.contrib.learn.ModeKeys.INFER and beam_width > 0:
       memory = tf.contrib.seq2seq.tile_batch(
           memory, multiplier=beam_width)
       source_sequence_length = tf.contrib.seq2seq.tile_batch(
           source_sequence_length, multiplier=beam_width)
-      encoder_state = tf.contrib.seq2seq.tile_batch(
+      fw_encoder_state = tf.contrib.seq2seq.tile_batch(
           encoder_state, multiplier=beam_width)
       batch_size = self.batch_size * beam_width
     else:
@@ -149,7 +150,7 @@ class AttentionModel(model.Model):
 
     if hparams.pass_hidden_state:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype).clone(
-          cell_state=encoder_state)
+          cell_state=fw_encoder_state)
       bw_decoder_initial_state = encoder_state
     else:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype)
