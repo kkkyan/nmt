@@ -100,12 +100,8 @@ class AttentionModel(model.Model):
 
     fw_attention_mechanism = self.attention_mechanism_fn(
         attention_option, num_units, memory, source_sequence_length, self.mode, name="fw_LuongAttention")
-    bw_attention_mechanism = self.attention_mechanism_fn(
-        attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention")
-    fw_attention_mechanism_twice = self.attention_mechanism_fn(
-        attention_option, num_units, memory, source_sequence_length, self.mode, name="fw_LuongAttention_twice")
-    bw_attention_mechanism_twice = self.attention_mechanism_fn(
-        attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention_twice")
+    # bw_attention_mechanism = self.attention_mechanism_fn(
+    #     attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention")
 
     fw_cell = model_helper.create_rnn_cell(
         unit_type=hparams.unit_type,
@@ -133,23 +129,15 @@ class AttentionModel(model.Model):
     alignment_history = (self.mode == tf.contrib.learn.ModeKeys.INFER and
                          beam_width == 0)
 
-    fw_cell = customer_attwrapper.AttentionWrapper(
+    fw_cell = tf.contrib.seq2seq.AttentionWrapper(
         fw_cell,
         fw_attention_mechanism,
-        fw_attention_mechanism_twice,
         attention_layer_size=num_units,
         alignment_history=alignment_history,
         output_attention=hparams.output_attention,
         name="fw_attention")
 
-    bw_cell = customer_attwrapper.AttentionWrapper(
-        bw_cell,
-        bw_attention_mechanism,
-        bw_attention_mechanism_twice,
-        attention_layer_size=num_units,
-        alignment_history=alignment_history,
-        output_attention=hparams.output_attention,
-        name="bw_attention")
+    # no need for bw_cell_attention
 
     # TODO(thangluong): do we need num_layers, num_gpus?
     # fw_cell = tf.contrib.rnn.DeviceWrapper(fw_cell,
@@ -162,8 +150,7 @@ class AttentionModel(model.Model):
     if hparams.pass_hidden_state:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype).clone(
           cell_state=encoder_state)
-      bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype).clone(
-          cell_state=encoder_state)
+      bw_decoder_initial_state = encoder_state
     else:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype)
       bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype)
@@ -183,10 +170,10 @@ def create_attention_mechanism(attention_option, num_units, memory,
 
   # Mechanism
   if attention_option == "luong":
-    attention_mechanism = customer_attwrapper.LuongAttention(
+    attention_mechanism = tf.contrib.seq2seq.LuongAttention(
         num_units, memory, memory_sequence_length=source_sequence_length, name=name)
   elif attention_option == "scaled_luong":
-    attention_mechanism = customer_attwrapper.LuongAttention(
+    attention_mechanism = tf.contrib.seq2seq.LuongAttention(
         num_units,
         memory,
         memory_sequence_length=source_sequence_length,

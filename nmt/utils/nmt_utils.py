@@ -115,7 +115,7 @@ def get_translation(nmt_outputs, sent_id, tgt_eos, subword_option):
     bw_output = bw_output[:bw_output.index(tgt_eos)]
 
   # backward reverse list
-  bw_output.reverse()
+  # bw_output.reverse()
 
   if subword_option == "bpe":  # BPE
     fw_translation = utils.format_bpe_text(fw_output)

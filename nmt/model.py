@@ -26,6 +26,7 @@ from tensorflow.python.layers import core as layers_core
 
 from . import model_helper
 from . import custom_helper
+from . import custom_train_helper
 from .utils import iterator_utils
 from .utils import misc_utils as utils
 from .custom_decoder import BasicDecoder_att
@@ -389,51 +390,55 @@ class BaseModel(object):
       if self.mode != tf.contrib.learn.ModeKeys.INFER:
         # decoder_emp_inp: [max_time, batch_size, num_units]
         target_input = iterator.target_input
-        # all re_ is reversed data for back ward
-        re_target_input = iterator.re_target_input
         if self.time_major:
           target_input = tf.transpose(target_input)
-          re_target_input = tf.transpose(re_target_input)
+
         decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, target_input)
-        re_decoder_emb_inp = tf.nn.embedding_lookup(
-            self.embedding_decoder, re_target_input)
 
         # fw_decoder
         # Helper
         fw_helper = tf.contrib.seq2seq.TrainingHelper(
               decoder_emb_inp, iterator.target_sequence_length,
               time_major=self.time_major)
-        fw_helper_bak = tf.contrib.seq2seq.TrainingHelper(
-              decoder_emb_inp, iterator.target_sequence_length,
-              time_major=self.time_major)
         # Decoder
         fw_my_decoder = BasicDecoder_att(
             fw_cell,
-            fw_helper, fw_helper_bak,
-            fw_decoder_initial_state,output_layer=self.output_layer)
+            fw_helper, 
+            fw_decoder_initial_state, output_layer=self.output_layer)
+
+
+        # decode
+        # use re_tgt_output to calculate loss so we don't need to reverse decode result
+        fw_rnn_output, \
+        fw_final_context_state,  \
+        fw_final_sequence_length,  = tf.contrib.seq2seq.dynamic_decode(
+          fw_my_decoder,
+          output_time_major=self.time_major,
+          swap_memory=True,
+          scope=decoder_scope)
 
         # bw_decoder
-        # bw_helper need to reverse input
+        # bw run after fw finish
+        bw_target_input = fw_rnn_output.sample_id
+        if self.time_major:
+          bw_target_input = tf.transpose(bw_target_input)
+        bw_decoder_emb_inp = tf.nn.embedding_lookup(
+            self.embedding_decoder, bw_target_input)
         # helper
-        bw_helper = tf.contrib.seq2seq.TrainingHelper(
-            re_decoder_emb_inp, iterator.target_sequence_length,
-            time_major=self.time_major)
-        bw_helper_bak = tf.contrib.seq2seq.TrainingHelper(
-            re_decoder_emb_inp, iterator.target_sequence_length,
+        bw_helper = custom_train_helper.TrainingHelper(
+            bw_decoder_emb_inp, fw_final_sequence_length,
             time_major=self.time_major)
         # Decoder
         bw_my_decoder = BasicDecoder_att(
             bw_cell,
-            bw_helper, bw_helper_bak,
+            bw_helper, 
             bw_decoder_initial_state, output_layer=self.output_layer)
-
-        # decode
-        # use re_tgt_output to calculate loss so we don't need to reverse decode result
-        (fw_rnn_output, bw_rnn_output), \
-        (fw_final_context_state, bw_final_context_state), \
-        (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode_att(
-          fw_my_decoder, bw_my_decoder,
+        # run decoder
+        bw_rnn_output, \
+        bw_final_context_state,  \
+        bw_final_sequence_length = tf.contrib.seq2seq.dynamic_decode(
+          bw_my_decoder,
           output_time_major=self.time_major,
           swap_memory=True,
           scope=decoder_scope)
@@ -445,10 +450,10 @@ class BaseModel(object):
         #   10% improvements for small models & 20% for larger ones.
         # If memory is a concern, we should apply output_layer per timestep.
         # sample_id is the argmax of the rnn output
-        fw_logits = fw_rnn_output
-        fw_sample_id = fw_decoder_output.sample_id
-        bw_logits = bw_rnn_output
-        bw_sample_id = bw_decoder_output.sample_id
+        fw_logits = fw_rnn_output.rnn_output
+        fw_sample_id = fw_rnn_output.sample_id
+        bw_logits = bw_rnn_output.rnn_output
+        bw_sample_id = bw_rnn_output.sample_id
 
       ## Inference
       else:
@@ -456,8 +461,6 @@ class BaseModel(object):
         length_penalty_weight = hparams.length_penalty_weight
         start_tokens = tf.fill([self.batch_size], tgt_sos_id)
         end_token = tgt_eos_id
-        bw_start_tokens = tf.fill([self.batch_size], tgt_sos_id)
-        bw_end_token = tgt_eos_id
 
         if beam_width > 0:
           fw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
@@ -470,55 +473,50 @@ class BaseModel(object):
               output_layer=self.output_layer,
               length_penalty_weight=length_penalty_weight)
 
-          bw_my_decoder = tf.contrib.seq2seq.BeamSearchDecoder(
-              cell=bw_cell,
-              embedding=self.embedding_decoder,
-              start_tokens=bw_start_tokens,
-              end_token=bw_end_token,
-              initial_state=bw_decoder_initial_state,
-              beam_width=beam_width,
-              output_layer=self.output_layer,
-              length_penalty_weight=length_penalty_weight)
-
         else:
           # Helper
-          sampling_temperature = hparams.sampling_temperature
-          if sampling_temperature > 0.0:
-            helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
-                self.embedding_decoder, start_tokens, end_token,
-                softmax_temperature=sampling_temperature,
-                seed=hparams.random_seed)
-          else:
-            helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                self.embedding_decoder, start_tokens, end_token)
-          # Decoder
-          my_decoder = tf.contrib.seq2seq.BasicDecoder(
-              fw_cell,
-              helper,
-              fw_decoder_initial_state,
-              output_layer=self.output_layer  # applied per timestep
-          )
+          raise "no this condition ERROR by YK."
 
         # Dynamic decoding
-        (fw_rnn_output, bw_rnn_output), \
-        (fw_final_context_state, bw_final_context_state), \
-        (fw_decoder_output, bw_decoder_output) = custom_helper.dynamic_bidecode(
-            fw_my_decoder, bw_my_decoder,
+        fw_rnn_output, \
+        fw_final_context_state,  \
+        fw_final_sequence_length = tf.contrib.seq2seq.dynamic_decode(
+            fw_my_decoder,
             maximum_iterations=maximum_iterations,
             output_time_major=self.time_major,
             swap_memory=True,
             scope=decoder_scope)
+        
+        # bw_decoder
+        # bw run after fw finish
+        bw_target_input = fw_rnn_output.predicted_ids[:,:,0]
+        if self.time_major:
+          bw_target_input = tf.transpose(bw_target_input)
+        bw_decoder_emb_inp = tf.nn.embedding_lookup(
+            self.embedding_decoder, bw_target_input)
+        # helper
+        bw_helper = custom_train_helper.TrainingHelper(
+            bw_decoder_emb_inp, fw_final_sequence_length[:,0],
+            time_major=self.time_major)
+        # Decoder
+        bw_my_decoder = BasicDecoder_att(
+            bw_cell,
+            bw_helper, 
+            bw_decoder_initial_state, output_layer=self.output_layer)
 
-        if beam_width > 0:
-          fw_logits = tf.no_op()
-          bw_logits = tf.no_op()
-          fw_sample_id = fw_decoder_output.predicted_ids
-          bw_sample_id = bw_decoder_output.predicted_ids
-        else:
-          fw_logits = fw_rnn_output
-          bw_logits = bw_rnn_output
-          fw_sample_id = fw_decoder_output.sample_id
-          bw_sample_id = bw_decoder_output.sample_id
+        # run decoder
+        bw_rnn_output, \
+        bw_final_context_state,  \
+        bw_final_sequence_length,  = tf.contrib.seq2seq.dynamic_decode(
+          bw_my_decoder,
+          output_time_major=self.time_major,
+          swap_memory=True,
+          scope=decoder_scope)
+
+        fw_logits = tf.no_op()
+        bw_logits = bw_rnn_output.rnn_output
+        fw_sample_id = fw_rnn_output.predicted_ids
+        bw_sample_id = bw_rnn_output.sample_id
 
     return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state, bw_final_context_state
 
@@ -602,7 +600,7 @@ class BaseModel(object):
     elif fw_sample_words.ndim == 3:  # beam search output in [batch_size,
                                   # time, beam_width] shape.
       fw_sample_words = fw_sample_words.transpose([2, 0, 1])
-      bw_sample_words = bw_sample_words.transpose([2, 0, 1])
+      bw_sample_words = bw_sample_words.transpose()
     return (fw_sample_words, bw_sample_words), infer_summary
 
 

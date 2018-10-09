@@ -520,7 +520,6 @@ def _sample_decode(model, global_step, sess, hparams, iterator, src_data,
   if hparams.beam_width > 0:
     # get the top translation.
     fw_nmt_outputs = fw_nmt_outputs[0]
-    bw_nmt_outputs = bw_nmt_outputs[0]
 
   (fw_translation, bw_translation) = nmt_utils.get_translation(
       (fw_nmt_outputs, bw_nmt_outputs),

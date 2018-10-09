@@ -90,31 +90,11 @@ class GNMTModel(attention_model.AttentionModel):
           num_bi_residual_layers=0,  # no residual connection
       )
 
-      uni_cell = model_helper.create_rnn_cell(
-          unit_type=hparams.unit_type,
-          num_units=hparams.num_units,
-          num_layers=num_uni_layers,
-          num_residual_layers=self.num_encoder_residual_layers,
-          forget_bias=hparams.forget_bias,
-          dropout=hparams.dropout,
-          num_gpus=self.num_gpus,
-          base_gpu=1,
-          mode=self.mode,
-          single_cell_fn=self.single_cell_fn)
-
-      # encoder_outputs: size [max_time, batch_size, num_units]
-      #   when time_major = True
-      encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
-          uni_cell,
-          bi_encoder_outputs,
-          dtype=dtype,
-          sequence_length=iterator.source_sequence_length,
-          time_major=self.time_major)
-
       # Pass all encoder state except the first bi-directional layer's state to
       # decoder.
-      encoder_state = (bi_encoder_state[1],) + (
-          (encoder_state,) if num_uni_layers == 1 else encoder_state)
+      encoder_outputs = bi_encoder_outputs
+      encoder_state = bi_encoder_state[1] 
+      
 
     return encoder_outputs, encoder_state
 

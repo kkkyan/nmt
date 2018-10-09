@@ -33,7 +33,7 @@ class BasicDecoderOutput(
 class BasicDecoder_att(decoder.Decoder):
   """Basic sampling decoder."""
 
-  def __init__(self, cell, helper, helper_bak, initial_state, output_layer=None):
+  def __init__(self, cell, helper, initial_state, output_layer=None):
     """Initialize BasicDecoder.
     Args:
       cell: An `RNNCell` instance.
@@ -58,7 +58,6 @@ class BasicDecoder_att(decoder.Decoder):
 
     self._cell = cell
     self._helper = helper
-    self._helper_bak = helper_bak
     self._initial_state = initial_state
     self._output_layer = output_layer
     
@@ -116,6 +115,7 @@ class BasicDecoder_att(decoder.Decoder):
     """
 
     return self._helper.initialize() + (self._initial_state,)
+
 
   def step(self, time, inputs, state, name=None):
     """Perform a decoding step.
