@@ -513,12 +513,9 @@ def _sample_decode(model, global_step, sess, hparams, iterator, src_data,
       iterator_src_placeholder: [src_data[decode_id]],
       iterator_batch_size_placeholder: 1,
   }
-  print("yes before")
   sess.run(iterator.initializer, feed_dict=iterator_feed_dict)
-  print("yes after")
 
   (fw_nmt_outputs,bw_nmt_outputs), attention_summary = model.decode(sess)
-  print("yes after2")
 
   if hparams.beam_width > 0:
     # get the top translation.
@@ -529,7 +526,6 @@ def _sample_decode(model, global_step, sess, hparams, iterator, src_data,
       sent_id=0,
       tgt_eos=hparams.eos,
       subword_option=hparams.subword_option)
-  print("yes after3")
   utils.print_out("    src: %s" % src_data[decode_id])
   utils.print_out("    ref: %s" % tgt_data[decode_id])
   utils.print_out(b"     fw nmt: " + fw_translation)

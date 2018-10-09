@@ -426,11 +426,8 @@ class BaseModel(object):
         bw_decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, bw_target_input)
 
-        print(fw_final_sequence_length)
-
         # helper
-        # bw_helper = custom_train_helper.TrainingHelper(
-        bw_helper = tf.contrib.seq2seq.TrainingHelper(
+        bw_helper = custom_train_helper.TrainingHelper(
             bw_decoder_emb_inp, fw_final_sequence_length,
             time_major=self.time_major)
         # Decoder
@@ -499,7 +496,7 @@ class BaseModel(object):
         bw_decoder_emb_inp = tf.nn.embedding_lookup(
             self.embedding_decoder, bw_target_input)
         # helper
-        bw_helper = tf.contrib.seq2seq.TrainingHelper(
+        bw_helper = custom_train_helper.TrainingHelper(
             bw_decoder_emb_inp, fw_final_sequence_length[:,0],
             time_major=self.time_major)
         # Decoder

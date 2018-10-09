@@ -203,6 +203,10 @@ class TrainingHelper(tf.contrib.seq2seq.Helper):
 
       self._batch_size = array_ops.size(sequence_length)
 
+      self._last_inputs = None
+      self._now_inputs = None
+      self._next_inputs = None
+
   @property
   def inputs(self):
     return self._inputs
@@ -226,10 +230,19 @@ class TrainingHelper(tf.contrib.seq2seq.Helper):
   def initialize(self, name=None):
     with ops.name_scope(name, "TrainingHelperInitialize"):
       finished = math_ops.equal(0, self._sequence_length)
+      is_next_inputs = ( 1 >= self._sequence_length)
+      all_next_inputs = math_ops.reduce_all(is_next_inputs)
       all_finished = math_ops.reduce_all(finished)
+      # get 3 inputs
+      self._last_inputs = self._zero_inputs
+      self._now_inputs = self._input_tas.read(0)
+      self._next_inputs = control_flow_ops.cond(
+          all_next_inputs, lambda: self._zero_inputs, lambda: self._input_tas.read(1)
+        )
+
       next_inputs = control_flow_ops.cond(
           all_finished, lambda: self._real_zero_inputs,
-          lambda: array_ops.concat([self._zero_inputs, self._input_tas.read(0), self._zero_inputs],1)
+          lambda: array_ops.concat([self._last_inputs, self._now_inputs, self._next_inputs],1)
         )
       
       return (finished, next_inputs)
@@ -247,15 +260,18 @@ class TrainingHelper(tf.contrib.seq2seq.Helper):
       next_time = time + 1
       finished = (next_time >= self._sequence_length)
       all_finished = math_ops.reduce_all(finished)
+      
+      # get 3 inputs
+      self._last_inputs = self._now_inputs
+      self._now_inputs = self._next_inputs
       def read_from_ta(inp):
-        next_input = None
-        if next_time == self._sequence_length - 1:
-          next_input = self._zero_inputs
-        else:
-          next_input = self._zero_inputs
-          # next_input = inp.read(next_time+1)
+        is_last_one = (next_time >= self._sequence_length-1)
+        all_last_one = math_ops.reduce_all(is_last_one)
+        self._next_inputs = control_flow_ops.cond(
+          all_last_one, lambda: self._zero_inputs, lambda: inp.read(next_time+1)
+        )
 
-        return array_ops.concat([next_input,inp.read(next_time),next_input],1)
+        return array_ops.concat([self._last_inputs,self._now_inputs,self._next_inputs],1)
 
       next_inputs = control_flow_ops.cond(
           all_finished, lambda: self._real_zero_inputs,
