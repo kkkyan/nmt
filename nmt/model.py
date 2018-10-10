@@ -73,6 +73,8 @@ class BaseModel(object):
     self.tgt_vocab_size = hparams.tgt_vocab_size
     self.num_gpus = hparams.num_gpus
     self.time_major = hparams.time_major
+    self.loss1_weight = hparams.loss1_weight
+    self.loss2_weight = hparams.loss2_weight
 
     # extra_args: to make it flexible for adding external customizable code
     self.single_cell_fn = None
@@ -565,7 +567,7 @@ class BaseModel(object):
     self.bw_loss = tf.reduce_sum(
         bw_crossent * target_weights) / tf.to_float(self.batch_size)
 
-    return self.fw_loss + self.bw_loss
+    return self.loss1_weight*self.fw_loss + self.loss2_weight*self.bw_loss
 
   def _get_infer_summary(self, hparams):
     return tf.no_op()
