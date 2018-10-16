@@ -88,21 +88,24 @@ class AttentionModel(model.Model):
       memory = encoder_outputs
 
     fw_encoder_state = encoder_state
+    fw_memory = memory
+    fw_source_sequence_length = source_sequence_length
+    fw_batch_size = self.batch_size
+
     if self.mode == tf.contrib.learn.ModeKeys.INFER and beam_width > 0:
-      memory = tf.contrib.seq2seq.tile_batch(
+      fw_memory = tf.contrib.seq2seq.tile_batch(
           memory, multiplier=beam_width)
-      source_sequence_length = tf.contrib.seq2seq.tile_batch(
+      fw_source_sequence_length = tf.contrib.seq2seq.tile_batch(
           source_sequence_length, multiplier=beam_width)
       fw_encoder_state = tf.contrib.seq2seq.tile_batch(
           encoder_state, multiplier=beam_width)
-      batch_size = self.batch_size * beam_width
-    else:
-      batch_size = self.batch_size
+      fw_batch_size = self.batch_size * beam_width
 
     fw_attention_mechanism = self.attention_mechanism_fn(
-        attention_option, num_units, memory, source_sequence_length, self.mode, name="fw_LuongAttention")
-    # bw_attention_mechanism = self.attention_mechanism_fn(
-    #     attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention")
+        attention_option, num_units, fw_memory, fw_source_sequence_length, self.mode, name="fw_LuongAttention")
+    # bw no need to tile
+    bw_attention_mechanism = self.attention_mechanism_fn(
+        attention_option, num_units, memory, source_sequence_length, self.mode, name="bw_LuongAttention")
 
     fw_cell = model_helper.create_rnn_cell(
         unit_type=hparams.unit_type,
@@ -138,7 +141,14 @@ class AttentionModel(model.Model):
         output_attention=hparams.output_attention,
         name="fw_attention")
 
-    # no need for bw_cell_attention
+    bw_cell = tf.contrib.seq2seq.AttentionWrapper(
+        bw_cell,
+        bw_attention_mechanism,
+        attention_layer_size=num_units,
+        alignment_history=alignment_history,
+        output_attention=hparams.output_attention,
+        name="bw_attention")
+
 
     # TODO(thangluong): do we need num_layers, num_gpus?
     # fw_cell = tf.contrib.rnn.DeviceWrapper(fw_cell,
@@ -149,12 +159,12 @@ class AttentionModel(model.Model):
     #                                         num_layers - 1, self.num_gpus))
 
     if hparams.pass_hidden_state:
-      fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype).clone(
+      fw_decoder_initial_state = fw_cell.zero_state(fw_batch_size, dtype).clone(
           cell_state=fw_encoder_state)
-      bw_decoder_initial_state = encoder_state
+      bw_decoder_initial_state = bw_cell.zero_state(self.batch_size, dtype).clone(cell_state=encoder_state)
     else:
-      fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype)
-      bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype)
+      fw_decoder_initial_state = fw_cell.zero_state(fw_batch_size, dtype)
+      bw_decoder_initial_state = bw_cell.zero_state(self.batch_size, dtype)
 
     return fw_cell, bw_cell, fw_decoder_initial_state, bw_decoder_initial_state
 
