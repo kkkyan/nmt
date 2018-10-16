@@ -64,9 +64,9 @@ def add_arguments(parser):
                       help="Whether to use time-major mode for dynamic RNN.")
   parser.add_argument("--num_embeddings_partitions", type=int, default=0,
                       help="Number of partitions for embedding vars.")
-  parser.add_argument("--loss1_weight", type=int, default=1,
+  parser.add_argument("--loss1_weight", type=float, default=1.0,
                       help="decoder layer1 loss weight")
-  parser.add_argument("--loss2_weight", type=int, default=1,
+  parser.add_argument("--loss2_weight", type=float, default=1.0,
                       help="decoder layer2 loss weight")
 
   # attention mechanisms
