@@ -133,6 +133,16 @@ class BaseModel(object):
     self.global_step = tf.Variable(0, trainable=False)
     params = tf.trainable_variables()
 
+    # the 2nd layer only update itself
+    # the 1st layer loss will be back to the whole graph
+    bw_params = []
+    fw_params = []
+    for p in params:
+      if "decoder/basic_lstm_cell" in p.name:
+        bw_params.append(p)
+      else:
+        fw_params.append(p)
+
     # Gradients and SGD update operation for training the model.
     # Arrage for the embedding vars to appear at the beginning.
     if self.mode == tf.contrib.learn.ModeKeys.TRAIN:
@@ -150,23 +160,36 @@ class BaseModel(object):
         opt = tf.train.AdamOptimizer(self.learning_rate)
 
       # Gradients
-      gradients = tf.gradients(
-          self.train_loss,
-          params,
+      bw_gradients = tf.gradients(
+          self.bw_loss,
+          bw_params,
           colocate_gradients_with_ops=hparams.colocate_gradients_with_ops)
 
-      clipped_grads, grad_norm_summary, grad_norm = model_helper.gradient_clip(
-          gradients, max_gradient_norm=hparams.max_gradient_norm)
-      self.grad_norm = grad_norm
+      fw_gradients = tf.gradients(
+          self.fw_loss,
+          fw_params,
+          colocate_gradients_with_ops=hparams.colocate_gradients_with_ops)
 
-      self.update = opt.apply_gradients(
-          zip(clipped_grads, params), global_step=self.global_step)
+      bw_clipped_grads, bw_grad_norm_summary, bw_grad_norm = model_helper.gradient_clip(
+          bw_gradients, max_gradient_norm=hparams.max_gradient_norm, scape="bw")
+      fw_clipped_grads, fw_grad_norm_summary, fw_grad_norm = model_helper.gradient_clip(
+          fw_gradients, max_gradient_norm=hparams.max_gradient_norm)
+
+      self.grad_norm = bw_grad_norm + fw_grad_norm
+
+      self.bw_update = opt.apply_gradients(
+          zip(bw_clipped_grads, bw_params), global_step=self.global_step)
+      self.fw_update = opt.apply_gradients(
+          zip(fw_clipped_grads, fw_params), global_step=self.global_step)
+      self.update = tf.group(self.bw_update, self.fw_update)
 
       # Summary
       self.train_summary = tf.summary.merge([
           tf.summary.scalar("lr", self.learning_rate),
           tf.summary.scalar("train_loss", self.train_loss),
-      ] + grad_norm_summary)
+          tf.summary.scalar("fw_train_loss", self.fw_loss),
+          tf.summary.scalar("bw_train_loss", self.bw_loss),
+      ] + fw_grad_norm_summary + bw_grad_norm_summary)
 
     if self.mode == tf.contrib.learn.ModeKeys.INFER:
       self.infer_summary = self._get_infer_summary(hparams)
