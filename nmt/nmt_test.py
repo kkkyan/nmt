@@ -34,8 +34,8 @@ def _update_flags(flags, test_name):
   flags.steps_per_stats = 5
   flags.src = "en"
   flags.tgt = "vi"
-  flags.num_layers = 1
-  flags.encoder_type = "gnmt"
+  flags.num_layers = 2
+  flags.encoder_type = "uni"
   flags.attention = "scaled_luong"
   flags.beam_width = 10
   flags.num_gpus = 0

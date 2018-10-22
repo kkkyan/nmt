@@ -75,7 +75,7 @@ class AttentionModel(model.Model):
           "Unknown attention architecture %s" % attention_architecture)
 
     num_units = hparams.num_units
-    num_layers = self.num_decoder_layers
+    num_layers = self.num_decoder_layers - 1
     num_residual_layers = self.num_decoder_residual_layers
     beam_width = hparams.beam_width
 
@@ -87,14 +87,17 @@ class AttentionModel(model.Model):
     else:
       memory = encoder_outputs
 
-    fw_encoder_state = encoder_state
+    fw_encoder_state = encoder_state[:-1]
+    if num_layers == 1:
+      fw_encoder_state = encoder_state[0]
+
     if self.mode == tf.contrib.learn.ModeKeys.INFER and beam_width > 0:
       memory = tf.contrib.seq2seq.tile_batch(
           memory, multiplier=beam_width)
       source_sequence_length = tf.contrib.seq2seq.tile_batch(
           source_sequence_length, multiplier=beam_width)
       fw_encoder_state = tf.contrib.seq2seq.tile_batch(
-          encoder_state, multiplier=beam_width)
+          fw_encoder_state, multiplier=beam_width)
       batch_size = self.batch_size * beam_width
     else:
       batch_size = self.batch_size
@@ -151,7 +154,7 @@ class AttentionModel(model.Model):
     if hparams.pass_hidden_state:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype).clone(
           cell_state=fw_encoder_state)
-      bw_decoder_initial_state = encoder_state
+      bw_decoder_initial_state = encoder_state[-1]
     else:
       fw_decoder_initial_state = fw_cell.zero_state(batch_size, dtype)
       bw_decoder_initial_state = bw_cell.zero_state(batch_size, dtype)
