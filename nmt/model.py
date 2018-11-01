@@ -455,7 +455,7 @@ class BaseModel(object):
 
         else:
           # Helper
-          helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+          helper = custom_train_helper.GreedyEmbeddingHelper(
                 self.embedding_decoder, start_tokens, end_token)
 
           # Decoder
@@ -482,12 +482,10 @@ class BaseModel(object):
           fw_sample_id = tf.no_op()
           bw_sample_id = tf.no_op()
         else:
-          fw_logits = fw_rnn_output.rnn_output
           bw_logits = fw_rnn_output.rnn_output
-          # bw_logits = fw_rnn_output.last_layer_output
-          fw_sample_id = fw_rnn_output.sample_id
+          fw_logits = fw_rnn_output.last_layer_output
           bw_sample_id = fw_rnn_output.sample_id
-          # bw_sample_id = fw_rnn_output.last_layer_sample_id
+          fw_sample_id = fw_rnn_output.last_layer_sample_id
 
     return fw_logits, bw_logits, fw_sample_id, bw_sample_id, fw_final_context_state
 

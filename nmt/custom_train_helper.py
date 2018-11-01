@@ -517,7 +517,7 @@ class ScheduledOutputTrainingHelper(TrainingHelper):
       return (finished, next_inputs, state)
 
 
-class GreedyEmbeddingHelper(Helper):
+class GreedyEmbeddingHelper(tf.contrib.seq2seq.Helper):
   """A helper for use during inference.
 
   Uses the argmax of the output (treated as logits) and passes the
@@ -585,12 +585,18 @@ class GreedyEmbeddingHelper(Helper):
     """next_inputs_fn for GreedyEmbeddingHelper."""
     del time, outputs  # unused by next_inputs_fn
     finished = math_ops.equal(sample_ids, self._end_token)
-    all_finished = math_ops.reduce_all(finished)
+
+    # get the -2nd layer output
+    last_layer_outputs = state.cell_state[-2].h
+    last_layer_sample_ids = math_ops.argmax(last_layer_outputs, axis=-1, output_type=dtypes.int32)
+    last_layer_finished = math_ops.equal(last_layer_sample_ids, self._end_token)
+
+    all_finished = math_ops.reduce_all(last_layer_finished)
     next_inputs = control_flow_ops.cond(
         all_finished,
         # If we're finished, the next_inputs value doesn't matter
         lambda: self._start_inputs,
-        lambda: self._embedding_fn(sample_ids))
+        lambda: self._embedding_fn(last_layer_sample_ids))
     return (finished, next_inputs, state)
 
 
