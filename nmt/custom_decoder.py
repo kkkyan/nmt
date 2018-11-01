@@ -27,7 +27,11 @@ __all__ = [
 
 
 class BasicDecoderOutput(
-    collections.namedtuple("BasicDecoderOutput", ("rnn_output","before_output_layer","sample_id"))):
+    collections.namedtuple("BasicDecoderOutput", ("rnn_output",
+                                                  "before_output_layer",
+                                                  "sample_id",
+                                                  "last_layer_output",
+                                                  "last_layer_sample_id"))):
   pass
 
 class BasicDecoder_att(decoder.Decoder):
@@ -92,7 +96,10 @@ class BasicDecoder_att(decoder.Decoder):
     return BasicDecoderOutput(
         rnn_output=self._rnn_output_size(),
         before_output_layer=self._before_output_size(),
-        sample_id=self._helper.sample_ids_shape)
+        sample_id=self._helper.sample_ids_shape,
+        last_layer_output=self._rnn_output_size(),
+        last_layer_sample_id=self._helper.sample_ids_shape
+    )
 
   @property
   def output_dtype(self):
@@ -104,7 +111,10 @@ class BasicDecoder_att(decoder.Decoder):
     return BasicDecoderOutput(
         nest.map_structure(lambda _: dtype, self._rnn_output_size()),
         nest.map_structure(lambda _: dtype, self._before_output_size()),
-        self._helper.sample_ids_dtype)
+        self._helper.sample_ids_dtype,
+        nest.map_structure(lambda _: dtype, self._rnn_output_size()),
+        self._helper.sample_ids_dtype
+    )
 
   def initialize(self, name=None):
     """Initialize the decoder.
@@ -129,10 +139,18 @@ class BasicDecoder_att(decoder.Decoder):
     """
     with ops.name_scope(name, "BasicDecoderStep", (time, inputs, state)):
       before_output_layer, cell_state = self._cell(inputs, state)
+
+      # here is the last 2 rnn_cell output
+      before_last_output_layer = cell_state.cell_state[-2].h
+      
       if self._output_layer is not None:
         cell_outputs = self._output_layer(before_output_layer)
+        last_cell_outputs = self._output_layer(before_last_output_layer)
+
       sample_ids = self._helper.sample(
           time=time, outputs=cell_outputs, state=cell_state)
+      last_sample_ids = self._helper.sample(
+          time=time, outputs=last_cell_outputs, state=cell_state)
 
       (finished, next_inputs, next_state) = self._helper.next_inputs(
           time=time,
@@ -140,7 +158,7 @@ class BasicDecoder_att(decoder.Decoder):
           state=cell_state,
           sample_ids=sample_ids)
 
-    outputs = BasicDecoderOutput(cell_outputs, before_output_layer, sample_ids)
+    outputs = BasicDecoderOutput(cell_outputs, before_output_layer, sample_ids, last_cell_outputs, last_sample_ids)
     return (outputs, next_state, next_inputs, finished)
 
   '''

@@ -34,10 +34,9 @@ def _update_flags(flags, test_name):
   flags.steps_per_stats = 5
   flags.src = "en"
   flags.tgt = "vi"
-  flags.num_layers = 2
+  flags.num_layers = 4
   flags.encoder_type = "uni"
   flags.attention = "scaled_luong"
-  flags.beam_width = 10
   flags.num_gpus = 0
   flags.train_prefix = ("nmt/testdata/"
                         "iwslt15.tst2013.100")
