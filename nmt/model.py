@@ -23,6 +23,7 @@ import collections
 import numpy as np
 
 import tensorflow as tf
+import tensorflow_hub as hub
 
 from . import model_helper
 from .utils import iterator_utils
@@ -720,7 +721,7 @@ class Model(BaseModel):
   This class implements a multi-layer recurrent neural network as encoder,
   and a multi-layer recurrent neural network decoder.
   """
-  def _build_encoder_from_sequence(self, hparams, sequence, sequence_length):
+  def _build_encoder_from_sequence(self, hparams, sequence, sequence_length, source_text):
     """Build an encoder from a sequence.
 
     Args:
@@ -746,6 +747,11 @@ class Model(BaseModel):
 
       self.encoder_emb_inp = self.encoder_emb_lookup_fn(
           self.embedding_encoder, sequence)
+      
+      # add tensorflow-hub
+      module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
+      hub_embed = hub.Module(module_url, trainable=True)
+      sent_embeddings = hub_embed(source_text)
 
       # Encoder_outputs: [max_time, batch_size, num_units]
       if hparams.encoder_type == "uni":
@@ -788,6 +794,8 @@ class Model(BaseModel):
       else:
         raise ValueError("Unknown encoder_type %s" % hparams.encoder_type)
 
+    # multiply top layer with hub-model
+    encoder_outputs = tf.multiply(encoder_outputs, sent_embeddings)
     # Use the top layer for now
     self.encoder_state_list = [encoder_outputs]
 
@@ -797,7 +805,7 @@ class Model(BaseModel):
     """Build encoder from source."""
     utils.print_out("# Build a basic encoder")
     return self._build_encoder_from_sequence(
-        hparams, self.iterator.source, self.iterator.source_sequence_length)
+        hparams, self.iterator.source, self.iterator.source_sequence_length, self.iterator.source_text)
 
   def _build_bidirectional_rnn(self, inputs, sequence_length,
                                dtype, hparams,

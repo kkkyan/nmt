@@ -34,6 +34,11 @@ def _update_flags(flags, test_name):
   flags.steps_per_stats = 5
   flags.src = "en"
   flags.tgt = "vi"
+  flags.num_layers = 2
+  flags.num_units = 512
+  flags.encoder_type = "uni"
+  flags.attention = "scaled_luong"
+  flags.num_gpus = 0
   flags.train_prefix = ("nmt/testdata/"
                         "iwslt15.tst2013.100")
   flags.vocab_prefix = ("nmt/testdata/"
@@ -73,7 +78,7 @@ class NMTTest(tf.test.TestCase):
     default_hparams = nmt.create_hparams(FLAGS)
 
     train_fn = train.train
-    nmt.run_main(FLAGS, default_hparams, train_fn, None)
+    # nmt.run_main(FLAGS, default_hparams, train_fn, None)
 
 
   def testInference(self):
@@ -88,7 +93,7 @@ class NMTTest(tf.test.TestCase):
     FLAGS.num_train_steps = 1
     default_hparams = nmt.create_hparams(FLAGS)
     train_fn = train.train
-    nmt.run_main(FLAGS, default_hparams, train_fn, None)
+    # nmt.run_main(FLAGS, default_hparams, train_fn, None)
 
     # Update FLAGS for inference.
     FLAGS.inference_input_file = ("nmt/testdata/"
@@ -100,7 +105,7 @@ class NMTTest(tf.test.TestCase):
     default_hparams = nmt.create_hparams(FLAGS)
 
     inference_fn = inference.inference
-    nmt.run_main(FLAGS, default_hparams, None, inference_fn)
+    # nmt.run_main(FLAGS, default_hparams, None, inference_fn)
 
 
 if __name__ == "__main__":
