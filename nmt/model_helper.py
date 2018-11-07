@@ -538,7 +538,11 @@ def load_model(model, ckpt_path, session, name):
     print_variables_in_ckpt(ckpt_path)
     utils.print_out("%s" % str(e))
 
-  session.run(tf.tables_initializer())
+  try:
+    session.run(tf.tables_initializer())
+  except Exception:
+    pass
+
   utils.print_out(
       "  loaded %s model parameters from %s, time %.2fs" %
       (name, ckpt_path, time.time() - start_time))
@@ -626,7 +630,11 @@ def create_or_load_model(model, model_dir, session, name):
   else:
     start_time = time.time()
     session.run(tf.global_variables_initializer())
-    session.run(tf.tables_initializer())
+    try:
+      session.run(tf.tables_initializer())
+    except Exception:
+      pass
+
     utils.print_out("  created %s model with fresh parameters, time %.2fs" %
                     (name, time.time() - start_time))
 

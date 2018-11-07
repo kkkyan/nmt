@@ -156,6 +156,7 @@ class BaseModel(object):
     # Global step
     self.global_step = tf.Variable(0, trainable=False)
 
+
     # Initializer
     self.random_seed = hparams.random_seed
     initializer = model_helper.get_initializer(
@@ -376,7 +377,11 @@ class BaseModel(object):
           self.output_layer = tf.layers.Dense(
               self.tgt_vocab_size, use_bias=False, name="output_projection")
 
-    with tf.variable_scope(scope or "dynamic_seq2seq", dtype=self.dtype):
+    with tf.variable_scope(scope or "dynamic_seq2seq", dtype=self.dtype, reuse=tf.AUTO_REUSE):
+      # tensorflow-hub
+      module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
+      self.hub_module = hub.Module(module_url, trainable=False)
+
       # Encoder
       if hparams.language_model:  # no encoder for language modeling
         utils.print_out("  language modeling: no encoder")
@@ -748,10 +753,7 @@ class Model(BaseModel):
       self.encoder_emb_inp = self.encoder_emb_lookup_fn(
           self.embedding_encoder, sequence)
       
-      # add tensorflow-hub
-      module_url = "https://tfhub.dev/google/universal-sentence-encoder/2"
-      hub_embed = hub.Module(module_url, trainable=True)
-      sent_embeddings = hub_embed(source_text)
+      sent_embeddings = self.hub_module(source_text)
 
       # Encoder_outputs: [max_time, batch_size, num_units]
       if hparams.encoder_type == "uni":
